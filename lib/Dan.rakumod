@@ -34,6 +34,10 @@ class Series does Positional is export {
         }
     }
 
+    multi method new( $data, *%h ) {
+        samewith( :$data, |%h )
+    }
+
     method index {
         $!index.map(*.key)
     }
