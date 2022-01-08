@@ -40,8 +40,15 @@ say $s2.data;
 say $s2.index;
 say $s2.index<c>;
 
+#d = {"b": 1, "a": 0, "c": 2}
+#pd.Series(d)
 
+my $s3 = Series.new( %(b => 1, a => 0, c => 2) );
 
+say ~$s3;
+say $s3.data;
+say $s3.index;
+say $s3.index<c>;
 
 #`[
 #]

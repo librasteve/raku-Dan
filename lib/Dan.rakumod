@@ -3,42 +3,31 @@ unit module Dan:ver<0.0.1>:auth<Steve Roe (p6steve@furnival.net)>;
 my $db = 0;               #debug
 
 class Series is export {
-    has Array $.data is required;
-    has       $.index where * ~~ List|Map;
+    has $.data is required where * ~~ Array|Hash;
+    has $.index            where * ~~ List|Map;
     has Str   $.dtype;
     has Str   $.name;
     has Bool  $.copy;
 
     method TWEAK {
-        if $!index {
-            die "index.elems != data.elems" if $!index.elems != $!data.elems;
-            given $!index {
-                when List {
-                    $!index = gather {
-                        my $i = 0;
-                        for |$!data -> $d {
-                            take $!index[$i++] => $d 
-                        }
-                    }.Hash
-                }
-                when Map {
-                    say 'hash'
-                }
+        die "index.elems != data.elems" if ( $!index && $!index.elems != $!data.elems );
+
+        $!index = gather {
+            my $i = 0;
+            for |$!data -> $d {
+                take ( $!index ?? $!index[$i++] !! $i++ ) => $d 
             }
-        } else {
-            $!index = gather {
-                my $i = 0;
-                for |$!data -> $d {
-                    take $i++ => $d 
-                }
-            }.Hash
-        }
+        }.Hash
     }
-    #`[
-    #]
+
+    method index {
+        $!index.keys
+    }
 
     method Str {
-        $!data
+        $!index
     }
 
+    #`[
+    #]
 }
