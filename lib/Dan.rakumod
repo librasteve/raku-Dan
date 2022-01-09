@@ -21,9 +21,27 @@ class Series does Positional is export {
     has Str   $.name;
     has Bool  $.copy;
 
+    ### Constructors ###
+
+    # Positional data arg => redispatch as Named
+    multi method new( $data, *%h ) {
+        samewith( :$data, |%h )
+    }
+
+    # List index arg => redispatch as Array (to next candidate as Array ~~ List)
+    multi method new( List:D :$index, *%h ) {
+        nextwith( index => $index.Array, |%h )
+    }
+
+    # Real (scalar) data arg => populate Array & redispatch
+    multi method new( Real :$data, :$index, *%h ) {
+        die "index required if data ~~ Real" unless $index;
+        samewith( data => ($data xx $index.elems).Array, :$index, |%h )
+    }
+
     method TWEAK {
         if $!data.first ~~ Pair {
-            die "index not permitted if data.first ~~ Pair" if $!index;
+            die "index not permitted if data is Array of Pairs" if $!index;
 
             $!data = gather {
                 for |$!data -> $p {
@@ -44,15 +62,7 @@ class Series does Positional is export {
         }
     }
 
-    # Positional data arg
-    multi method new( $data, *%h ) {
-        samewith( :$data, |%h )
-    }
-
-    # Positional data arg with List index arg
-    multi method new( $data, List:D :$index, *%h ) {
-        samewith( :$data, index => $index.Array, |%h )
-    }
+    ### Outputs ###
 
     method index {
         $!index.map(*.key)
@@ -61,6 +71,12 @@ class Series does Positional is export {
     method Str {
         $!index
     }
+
+    method dtype {
+        Mu
+    }
+
+    ### Role Support ###
 
     # Positional role support 
     # viz. https://docs.raku.org/type/Positional
