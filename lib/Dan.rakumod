@@ -1,10 +1,22 @@
 unit module Dan:ver<0.0.1>:auth<Steve Roe (p6steve@furnival.net)>;
 
+#`[
+Todos
+- slice
+- nd indexing
+- dtype (manual/auto)
+- map
+- pipe
+- operators
+- hyper
+#]
+
+
 my $db = 0;               #debug
 
 class Series does Positional is export {
-    has $.data is required where * ~~ Array;
-    has $.index            where * ~~ List|Array;
+    has Array $.data is required;
+    has Array $.index;
     has Str   $.dtype;
     has Str   $.name;
     has Bool  $.copy;
@@ -13,14 +25,12 @@ class Series does Positional is export {
         if $!data.first ~~ Pair {
             die "index not permitted if data.first ~~ Pair" if $!index;
 
-            my @new-data = [];
-            my @new-index = [];
-            for |$!data -> $p {
-                @new-data.push: $p.value;
-                @new-index.push: $p;
-            }
-            $!data = @new-data;
-            $!index = @new-index;
+            $!data = gather {
+                for |$!data -> $p {
+                    take $p.value;
+                    $!index.push: $p;
+                }
+            }.Array
 
         } else {
             die "index.elems != data.elems" if ( $!index && $!index.elems != $!data.elems );
@@ -34,8 +44,14 @@ class Series does Positional is export {
         }
     }
 
+    # Positional data arg
     multi method new( $data, *%h ) {
         samewith( :$data, |%h )
+    }
+
+    # Positional data arg with List index arg
+    multi method new( $data, List:D :$index, *%h ) {
+        samewith( :$data, index => $index.Array, |%h )
     }
 
     method index {

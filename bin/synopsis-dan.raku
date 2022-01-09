@@ -36,7 +36,10 @@ say "=================";
 
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
 
-s = Series.new([b=>1, a=>0, c=>2]);
+#s = Series.new([b=>1, a=>0, c=>2]);    #canonical form is ordered List of Pairs
+
+my %h = %(b=>1, a=>0, c=>2); 
+s = Series.new(%h.Array);               #or coerce an (unordered) Hash to an Array
 
 say ~s;
 say s[1];
