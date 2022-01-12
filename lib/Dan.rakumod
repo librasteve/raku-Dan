@@ -14,7 +14,7 @@ Todos
 
 my $db = 0;               #debug
 
-class Series does Positional is export {
+class Series does Positional does Iterable does Associative is export {
     has Array $.data is required;
     has Array $.index;
     has Str   $.dtype;
@@ -40,6 +40,7 @@ class Series does Positional is export {
     }
 
     method TWEAK {
+        # sort out data-index dependencies
         if $!data.first ~~ Pair {
             die "index not permitted if data is Array of Pairs" if $!index;
 
@@ -49,7 +50,6 @@ class Series does Positional is export {
                     $!index.push: $p;
                 }
             }.Array
-
         } else {
             die "index.elems != data.elems" if ( $!index && $!index.elems != $!data.elems );
 
@@ -60,6 +60,16 @@ class Series does Positional is export {
                 }
             }.Array
         }
+
+        # check & set dtype
+        my %dtypes = (); 
+        for |$!data -> $d {
+            %dtypes{$d.^name} = 1;
+        }
+        if %dtypes<Bool>:exists { $!dtype = 'Bool' }
+        if %dtypes<Int>:exists  { $!dtype = 'Int' }
+        if %dtypes<Num>:exists  { $!dtype = 'Num' }
+        #iamerejh
     }
 
     ### Outputs ###
@@ -69,11 +79,7 @@ class Series does Positional is export {
     }
 
     method Str {
-        $!index
-    }
-
-    method dtype {
-        Mu
+        $!index, ", dtype:", $!dtype
     }
 
     ### Role Support ###
@@ -82,7 +88,7 @@ class Series does Positional is export {
     # viz. https://docs.raku.org/type/Positional
 
     method of {
-        Mu
+        $!dtype 
     }
     method elems {
         $!data.elems
@@ -115,14 +121,21 @@ class Series does Positional is export {
     # viz. https://docs.raku.org/type/Iterable
 
     method iterator {
+        $!data.iterator
     }
     method flat {
+        $!data.flat
     }
     method lazy {
+        $!data.lazy
     }
     method hyper {
+        $!data.hyper
     }
+}
 
+class DataFrame {
+    has Series @.series;
+}
     #`[
     #]
-}

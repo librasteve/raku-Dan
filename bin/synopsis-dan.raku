@@ -19,8 +19,12 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
-say ~s; say "=============================================";
+say ~s; 
+say s[1];
+say s<c>;
+say "=============================================";
 
+#`[
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
 
 #canonical form is (ordered) Array of Pairs
@@ -44,15 +48,86 @@ say s.data;
 say s.index;
 say s.of;
 say s.dtype;
+#]
+
+### Datatypes ###
+
+#`[
+The pandas / python base numeric datatypes map as follows:
+
+- float             Num 
+- int               Int
+- bool              Bool
+
+... TBD (check precision)
+- timedelta64[ns]   Duration
+- datetime64[ns]    Instance
+
+... representation in pandas
+- float             Real
+- float             Rat
+
+pandas ExtensionTypes are TBD
+string / object dtypes are TBD
+
+The general approach is:
+- raku only - everything is Mu and works as usual
+... is this efficient?
+... do we care?
+... how to handle (eg.) Measure types?
+- raku2pandas - map dtypes suitably
+... maybe remember original types on round trip (name, label?)
+- pandas2raku - map dtypes suitably
+... remember original type on round trip
+
+So, functions are:
+- Dan ... dtype is a courtesy attr, does nothing
+#]
+
+### DataFrames ###
+
+#`[
+dates = pd.date_range("20130101", periods=6)
+
+DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
+               '2013-01-05', '2013-01-06'],
+              dtype='datetime64[ns]', freq='D')
+
+df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
+#]
+
+my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
+say dates;
+
+say [[rand xx 6] xx 4];
+#my \df = DataFrame.new( [[rand xx 6]] xx 4], index => dates, columns => <A B C D> );
+
+
 
 ### Operations ###
 
-#say s >>+ 2;
-#say s [+] 2;
+# Array Index Slices
+say s[*-1];
+say s[0 .. 2];
+
+# Math
+
+say s.map(*+2);
+say [+] s; 
+
+dd s.hyper;
+
+say s;
+my \t = s;
+say t;
+
+#say s >>+>> 2;
+#say s >>+<< s;
 
 #`[
 Notes:
-- NaN is cool
-- Series from Hash - order is unspecified (thus canonical is List of Pairs)
+- NaN is raku built in 
+- Series from Hash(Array) - order is unspecified (thus canonical is List of Pairs)
+-  
 #]
 
