@@ -123,7 +123,7 @@ say dates;
 say [[rand xx 6] xx 4];
 #my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
 my \df = DataFrame.new( data => [[rand xx 6] xx 4] );
-my \df = DataFrame.new( [[rand xx 6] xx 4] );
+#my \df = DataFrame.new( [[rand xx 6] xx 4] );
 
 dd df;
 
