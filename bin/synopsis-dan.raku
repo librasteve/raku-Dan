@@ -19,7 +19,7 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
-say ~s; 
+say ~s;
 say s[1];
 say s<c>;
 say "=============================================";
@@ -87,13 +87,14 @@ So, functions are:
 ### Operations ###
 
 # Array Index Slices
+#`[
 say s[*-1];
-say s[0 .. 2];
+say s[0..2];
 
 # Math
 
 say s.map(*+2);
-say [+] s; 
+say [+] s;
 
 dd s.hyper;
 
@@ -103,7 +104,7 @@ say t;
 
 #say s >>+>> 2;
 #say s >>+<< s;
-
+#]
 ### DataFrames ###
 
 #`[
@@ -127,8 +128,8 @@ my \df = DataFrame.new( data => [[rand xx 6] xx 4] );
 
 #`[
 Notes:
-- NaN is raku built in 
+- NaN is raku built in
 - Series from Hash(Array) - order is unspecified (thus canonical is List of Pairs)
--  
+-
 #]
 
