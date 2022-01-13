@@ -10,7 +10,7 @@ use Dan;
 my \s = $;    
 
 ### Declarations ###
-
+#`[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 
@@ -23,7 +23,7 @@ say ~s;
 say s[1];
 say s<c>;
 say "=============================================";
-
+#]
 #`[
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
 
@@ -123,8 +123,9 @@ say dates;
 say [[rand xx 6] xx 4];
 #my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
 my \df = DataFrame.new( data => [[rand xx 6] xx 4] );
+my \df = DataFrame.new( [[rand xx 6] xx 4] );
 
-
+dd df;
 
 #`[
 Notes:
