@@ -84,26 +84,6 @@ So, functions are:
 - Dan ... dtype is a courtesy attr, does nothing
 #]
 
-### DataFrames ###
-
-#`[
-dates = pd.date_range("20130101", periods=6)
-
-DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
-               '2013-01-05', '2013-01-06'],
-              dtype='datetime64[ns]', freq='D')
-
-df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
-#]
-
-my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
-say dates;
-
-say [[rand xx 6] xx 4];
-#my \df = DataFrame.new( [[rand xx 6]] xx 4], index => dates, columns => <A B C D> );
-
-
-
 ### Operations ###
 
 # Array Index Slices
@@ -123,6 +103,27 @@ say t;
 
 #say s >>+>> 2;
 #say s >>+<< s;
+
+### DataFrames ###
+
+#`[
+dates = pd.date_range("20130101", periods=6)
+
+DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
+               '2013-01-05', '2013-01-06'],
+              dtype='datetime64[ns]', freq='D')
+
+df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
+#]
+
+my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
+say dates;
+
+say [[rand xx 6] xx 4];
+#my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
+my \df = DataFrame.new( data => [[rand xx 6] xx 4] );
+
+
 
 #`[
 Notes:
