@@ -10,7 +10,7 @@ use Dan;
 my \s = $;    
 
 ### Declarations ###
-#`[
+#[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 
@@ -19,7 +19,7 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
-say ~s;
+#say ~s;
 say s[1];
 say s<c>;
 say "=============================================";
