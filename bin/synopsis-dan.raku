@@ -19,7 +19,7 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
-say ~s;
+#say ~s;
 say s[1];
 say s<c>;
 say "=============================================";
