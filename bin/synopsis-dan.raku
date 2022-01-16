@@ -21,10 +21,7 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
-say ~s;
-say s[1];
-say s<c>;
-say "=============================================";
+say ~s; say "=============================================";
 
 #`[
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
@@ -46,6 +43,7 @@ say ~s; say "=============================================";
 say s[1];
 say s{2};
 say s<c>;
+say s{"c"};
 say s.data;
 say s.index;
 say s.of;
@@ -85,7 +83,7 @@ The general approach is:
 So, functions are:
 - Dan ... dtype is a courtesy attr, does nothing
 #]
-
+#`[
 ### Operations ###
 
 # Array Index Slices
@@ -98,16 +96,12 @@ say s.map(*+2);
 say [+] s;
 
 # Hyper
-dd s.hyper;
+#dd s.hyper;
 say s >>+>> 2;
-
-#`[
-
-
-#say s >>+<< s;
-#say s >>++;
-#my \t = s; say t;
+say s >>+<< s;
+my \t = s; say ~t;
 #]
+
 ### DataFrames ###
 
 #`[
@@ -118,16 +112,13 @@ DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
               dtype='datetime64[ns]', freq='D')
 
 df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
+#]
 
-my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    #say dates;
+my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    say dates;
 
-#say [[rand xx 6] xx 4];
-#my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
-#my \df = DataFrame.new( data => [[rand xx 6] xx 4] );
-my \df = DataFrame.new( [[rand xx 6] xx 4] );
+my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
 
 dd df;
-#]
 
 #`[
 Notes:

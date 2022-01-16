@@ -14,7 +14,7 @@ Todos
 
 my $db = 0;               #debug
 
-class Series does Positional does Iterable does Associative is export {
+class Series does Positional does Iterable is export {
     has Array $.data is required;
     has Array $.index;
     has Str   $.dtype;
@@ -100,8 +100,10 @@ class Series does Positional does Iterable does Associative is export {
         0 <= $p < $!data.elems ?? True !! False
     }
 
-    # Associative role support 
+    # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
+    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
 
     method keyof {
         Str(Any) 
@@ -132,15 +134,27 @@ class Series does Positional does Iterable does Associative is export {
     method hyper {
         $!data.hyper
     }
-
-    multi method infix(Hyper: Dan::Series, Int) is default is export {
-        die "yo"
-    }
 }
 
 class DataFrame does Positional does Iterable does Associative is export {
     has Array @.series is required;
     has Array $.index;
+    has Array $.columns;
+
+    # Positional data arg => redispatch as Named
+    multi method new( $data, *%h ) {
+        samewith( :$data, |%h )
+    }
+
+    # List index arg => redispatch as Array (to next candidate as Array ~~ List)
+    multi method new( List:D :$index, *%h ) {
+        nextwith( index => $index.Array, |%h )
+    }
+
+    # List columns arg => redispatch as Array (to next candidate as Array ~~ List)
+    multi method new( List:D :$columns, *%h ) {
+        nextwith( columns => $columns.Array, |%h )
+    }
 
     multi method new( Array:D :$data, *%h ) {
         my $series = gather {
@@ -157,7 +171,7 @@ class DataFrame does Positional does Iterable does Associative is export {
     }
 }
 #`[
-class Series does Positional does Iterable does Associative is export {
+class Series does Positional does Iterable is export {
     has Array $.data is required;
     has Array $.index;
     has Str   $.dtype;
@@ -243,8 +257,10 @@ class Series does Positional does Iterable does Associative is export {
         0 <= $p < $!data.elems ?? True !! False
     }
 
-    # Associative role support 
+    # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
+    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
 
     method keyof {
         Str(Any) 
