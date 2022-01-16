@@ -11,10 +11,12 @@ my \s = $;
 
 ### Declarations ###
 
+#`[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 
 say ~s; say "=============================================";
+#]
 
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
@@ -89,24 +91,22 @@ So, functions are:
 # Array Index Slices
 say s[*-1];
 say s[0..2];
+say s[2] + 2;
 
 # Math
-
 say s.map(*+2);
 say [+] s;
 
-#`[
-say s>>++;
-
+# Hyper
 dd s.hyper;
-
-say s;
-my \t = s;
-say t;
-
-say s[2] + 2;
 say s >>+>> 2;
+
+#`[
+
+
 #say s >>+<< s;
+#say s >>++;
+#my \t = s; say t;
 #]
 ### DataFrames ###
 
