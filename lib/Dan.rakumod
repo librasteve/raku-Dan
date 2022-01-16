@@ -132,18 +132,16 @@ class Series does Positional does Iterable does Associative is export {
     method hyper {
         $!data.hyper
     }
+
+    multi method infix(Hyper: Dan::Series, Int) is default is export {
+        die "yo"
+    }
 }
 
 class DataFrame does Positional does Iterable does Associative is export {
     has Array @.series is required;
     has Array $.index;
 
-    # Positional data arg => redispatch as Named
-    multi method new( $data, *%h ) {
-        samewith( :$data, |%h )
-    }
-
-    #| 2D Array arg => Array of Series
     multi method new( Array:D :$data, *%h ) {
         my $series = gather {
             for $data -> $d {
