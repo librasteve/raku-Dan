@@ -118,7 +118,7 @@ my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    say dates;
 
 my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
 
-dd df;
+say df
 
 #`[
 Notes:

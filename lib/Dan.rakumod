@@ -16,7 +16,7 @@ my $db = 0;               #debug
 
 class Series does Positional does Iterable is export {
     has Array $.data is required;
-    has Array $.index;
+    has Array(List) $.index;
     has Str   $.dtype;
     has Str   $.name;
     has Bool  $.copy;
@@ -28,11 +28,6 @@ class Series does Positional does Iterable is export {
         samewith( :$data, |%h )
     }
 
-    # List index arg => redispatch as Array (to next candidate as Array ~~ List)
-    multi method new( List:D :$index, *%h ) {
-        nextwith( index => $index.Array, |%h )
-    }
-
     # Real (scalar) data arg => populate Array & redispatch
     multi method new( Real :$data, :$index, *%h ) {
         die "index required if data ~~ Real" unless $index;
@@ -40,7 +35,7 @@ class Series does Positional does Iterable is export {
     }
 
     method TWEAK {
-        # sort out data-index dependencies
+        # make index from input Hash
         if $!data.first ~~ Pair {
             die "index not permitted if data is Array of Pairs" if $!index;
 
@@ -50,6 +45,8 @@ class Series does Positional does Iterable is export {
                     $!index.push: $p;
                 }
             }.Array
+
+        # make index into Array of Pairs (index => data element)
         } else {
             die "index.elems != data.elems" if ( $!index && $!index.elems != $!data.elems );
 
@@ -69,7 +66,7 @@ class Series does Positional does Iterable is export {
         if %dtypes<Bool>:exists { $!dtype = 'Bool' }
         if %dtypes<Int>:exists  { $!dtype = 'Int' }
         if %dtypes<Num>:exists  { $!dtype = 'Num' }
-        #iamerejh
+        ##FIXME add Str?
     }
 
     ### Outputs ###
@@ -136,35 +133,45 @@ class Series does Positional does Iterable is export {
     }
 }
 
-class DataFrame does Positional does Iterable does Associative is export {
-    has Array @.series is required;
-    has Array $.index;
-    has Array $.columns;
+class DataFrame does Positional does Iterable is export {
+    has Array $.series is required;
+    has Array(List) $.index;
+    has Array(List) $.columns;
 
     # Positional data arg => redispatch as Named
     multi method new( $data, *%h ) {
         samewith( :$data, |%h )
     }
 
-    # List index arg => redispatch as Array (to next candidate as Array ~~ List)
-    multi method new( List:D :$index, *%h ) {
-        nextwith( index => $index.Array, |%h )
-    }
-
-    # List columns arg => redispatch as Array (to next candidate as Array ~~ List)
-    multi method new( List:D :$columns, *%h ) {
-        nextwith( columns => $columns.Array, |%h )
-    }
-
+    # Named 2d data arg => make some Series 
     multi method new( Array:D :$data, *%h ) {
         my $series = gather {
-            for $data -> $d {
+            for $data[*;] -> $d {
                 take Series.new($d)    
             }
         }.Array;
 
         samewith( :$series, |%h )
     }
+
+    method TWEAK {
+        die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+
+        # make columns into Array of Pairs (alpha => Series)
+        my $alpha3 = 'A'..'ZZZ';
+        $!columns = gather {
+            my $i = 0;
+            for |$!series -> $s {
+                take ( ( $!columns ?? $!columns[$i++] !! $alpha3[$i++] ) => $s )
+            }
+        }.Array
+    }
+
+#`[ iamerejh
+    method Str {
+        say "yoyo"
+    }
+#]
 
     method of {
         Mu
@@ -226,7 +233,6 @@ class Series does Positional does Iterable is export {
         if %dtypes<Bool>:exists { $!dtype = 'Bool' }
         if %dtypes<Int>:exists  { $!dtype = 'Int' }
         if %dtypes<Num>:exists  { $!dtype = 'Num' }
-        #iamerejh
     }
 
     ### Outputs ###
