@@ -1,11 +1,11 @@
 **Very much a work in progress - contributions very welcome!**
 
 # raku Dan
-Top level raku **D**ata **An**alysis Module
+Top raku **D**ata **An**alysis Module
 
 Dan aims to capture some helper datatypes, classes & roles, functions & operators for raku Data Analysis 
 
-Dan can be a common parent for the raku end of some Data Analytic, Numeric & Scientific bindings...
+Dan is a common parent set of classes for the raku end of Data Analytic, Numeric & Scientific bindings...
 - Dan::Curve    - binding to pandas via Inline::Python
 - Dan::Quinling - binding to polars via Rust FFI
 - Dan::Paddle   - binding to Perl(5) Data Language using Inline::Perl5
@@ -13,7 +13,7 @@ Dan can be a common parent for the raku end of some Data Analytic, Numeric & Sci
 - SciRa
 
 The initial focus is on a minimal set of functions to cover the raku equivalent of:
-- ndarray (eg. shaped arrays)
+- 2darrays
 - Series
 - DataFrames
 
