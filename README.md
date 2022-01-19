@@ -13,7 +13,7 @@ Dan is a common parent set of classes for the raku end of Data Analytic, Numeric
 - SciRa
 
 The initial focus is on a minimal set of functions to cover the raku equivalent of:
-- ndarray (eg. shaped arrays)
+- 2darrays
 - Series
 - DataFrames
 
