@@ -76,7 +76,7 @@ class Series does Positional does Iterable is export {
     }
 
     method Str {
-        $!index, ", dtype:", $!dtype
+        $!index.join("\n") ~ "\ndtype: $!dtype"
     }
 
     ### Role Support ###
@@ -143,7 +143,7 @@ class DataFrame does Positional does Iterable is export {
         samewith( :$data, |%h )
     }
 
-    # Named 2d data arg => make some Series 
+    # 2d Array data arg => make into Series 
     multi method new( Array:D :$data, *%h ) {
         my $series = gather {
             for $data[*;] -> $d {
@@ -157,7 +157,7 @@ class DataFrame does Positional does Iterable is export {
     method TWEAK {
         die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
 
-        # make columns into Array of Pairs (alpha => Series)
+        # make columns into Array of Pairs (alpha3 => Dan::Series)
         my $alpha3 = 'A'..'ZZZ';
         $!columns = gather {
             my $i = 0;
@@ -167,11 +167,25 @@ class DataFrame does Positional does Iterable is export {
         }.Array
     }
 
-#`[ iamerejh
     method Str {
-        say "yoyo"
+        # i is inner,       j is outer
+        # i is cols across, j is rows down
+        # i0 is index col , j0 is row header
+        gather {
+            loop ( my $j=0; $j <= $!index.elems ; $j++ ) {
+                loop ( my $i=0; $i <= $!columns.elems ; $i++ ) {
+                    given $j, $i {
+                        when 0,0  { take "\t" }
+                        when *,0  { take $!index[$j-1] }
+                        when 0,*  { take $!columns[$i-1].key ~ "\t\t" }
+                        default   { take $!columns[$i-1].value.data[$j-1] }
+                    }
+                    take "\t";
+                }
+                take "\n";
+            }
+        }.join('')
     }
-#]
 
     method of {
         Mu
