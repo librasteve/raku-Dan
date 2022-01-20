@@ -34,6 +34,12 @@ class Series does Positional does Iterable is export {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
+    # Date (scalar) data arg => populate Array & redispatch
+    multi method new( Date :$data, :$index, *%h ) {
+        die "index required if data ~~ Date" unless $index;
+        samewith( data => ($data xx $index.elems).Array, :$index, |%h )
+    }
+
     method TWEAK {
         # make index from input Hash
         if $!data.first ~~ Pair {
@@ -58,15 +64,18 @@ class Series does Positional does Iterable is export {
             }.Array
         }
 
-        # check & set dtype
+        # auto set dtype
         my %dtypes = (); 
         for |$!data -> $d {
             %dtypes{$d.^name} = 1;
         }
-        if %dtypes<Bool>:exists { $!dtype = 'Bool' }
-        if %dtypes<Int>:exists  { $!dtype = 'Int' }
-        if %dtypes<Num>:exists  { $!dtype = 'Num' }
+        if %dtypes<Bool>:exists  { $!dtype = 'Bool' }
+        if %dtypes<Int>:exists   { $!dtype = 'Int' }
+        if %dtypes<Num>:exists   { $!dtype = 'Num' }
+        if %dtypes<Date>:exists  { $!dtype = 'Date' }
+        ##FIXME do as .any junction on keys?
         ##FIXME add Str?
+        ##FIXME manually set dtype?
     }
 
     ### Outputs ###
@@ -137,34 +146,59 @@ class DataFrame does Positional does Iterable is export {
     has Array $.series is required;
     has Array(List) $.index;
     has Array(List) $.columns;
+    has Int $!row-count;
 
-    # Positional data arg => redispatch as Named
-    multi method new( $data, *%h ) {
-        samewith( :$data, |%h )
-    }
-
-    # 2d Array data arg => make into Series 
-    multi method new( Array:D :$data, *%h ) {
-        my $series = gather {
-            for $data[*;] -> $d {
-                take Series.new($d)    
-            }
-        }.Array;
-
+    # Positional series arg => redispatch as Named
+    multi method new( $series, *%h ) {
         samewith( :$series, |%h )
     }
 
     method TWEAK {
-        die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+        # 2d Array series arg => make into Series 
+        if $!series.first ~~ Array {
+            $!series = gather {
+                for $!series[*;] -> $s {
+                    take Series.new($s)    
+                }
+            }.Array
+        }
 
-        # make columns into Array of Pairs (alpha3 => Dan::Series)
-        my $alpha3 = 'A'..'ZZZ';
-        $!columns = gather {
-            my $i = 0;
-            for |$!series -> $s {
-                take ( ( $!columns ?? $!columns[$i++] !! $alpha3[$i++] ) => $s )
+        # case when series arg is Array of Pairs (no index)
+        if $!series.first ~~ Pair {
+            die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
+
+            for |$!series -> $p {
+                $!row-count max= $p.value.elems
             }
-        }.Array
+
+            # make Series if not provided 
+            $!series = gather {
+                for |$!series -> $p {
+                    given $p.value {
+                        when Series { take $p.value }
+                        when Real   { take Series.new( $_, index => [0..^$!row-count] ) }
+                        when Date   { take Series.new( $_, index => [0..^$!row-count] ) }
+                    }
+                    $!columns.push: $p;
+                }
+            }.Array
+        } else {
+            die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+
+            #iamerejh (make row count in all cases
+            for |$!series -> $p {
+                $!row-count max= $p.value.elems
+            }
+
+            # make columns into Array of Pairs (alpha3 => Dan::Series)
+            my $alpha3 = 'A'..'ZZZ';
+            $!columns = gather {
+                my $i = 0;
+                for |$!series -> $s {
+                    take ( ( $!columns ?? $!columns[$i++] !! $alpha3[$i++] ) => $s )
+                }
+            }.Array
+        }
     }
 
     method Str {
@@ -172,7 +206,7 @@ class DataFrame does Positional does Iterable is export {
         # i is cols across, j is rows down
         # i0 is index col , j0 is row header
         gather {
-            loop ( my $j=0; $j <= $!index.elems ; $j++ ) {
+            loop ( my $j=0; $j <= $!row-count ; $j++ ) {
                 loop ( my $i=0; $i <= $!columns.elems ; $i++ ) {
                     given $j, $i {
                         when 0,0  { take "\t" }

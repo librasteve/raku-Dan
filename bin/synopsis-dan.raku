@@ -114,11 +114,32 @@ DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
 df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
 #]
 
-my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    say dates;
+my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    #say dates;
 
 my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
 
 say ~df; say "=============================================";
+
+#`[
+df2 = pd.DataFrame(
+   ...:     {
+   ...:         "A": 1.0,
+   ...:         "B": pd.Timestamp("20130102"),
+   ...:         "C": pd.Series(1, index=list(range(4)), dtype="float32"),
+   ...:         "D": np.array([3] * 4, dtype="int32"),
+   ...:         "E": pd.Categorical(["test", "train", "test", "train"]),
+   ...:         "F": "foo",
+   ...:     }
+   ...: )
+#]
+
+my \df2 = DataFrame.new([
+        A => 1.0,
+        B => Date.new("2022-01-01"),
+        C => Series.new(1, index => [0..^4], dtype => "Num"),
+]);
+dd df2;
+say ~df2;
 
 #`[
 Notes:
