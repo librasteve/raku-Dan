@@ -131,7 +131,6 @@ df2 = pd.DataFrame(
    ...:         "F": "foo",
    ...:     }
    ...: )
-#]
 
 my \df2 = DataFrame.new([
         A => 1.0,
@@ -140,6 +139,7 @@ my \df2 = DataFrame.new([
 ]);
 dd df2;
 say ~df2;
+#]
 
 #`[
 Notes:

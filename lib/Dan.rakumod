@@ -154,22 +154,9 @@ class DataFrame does Positional does Iterable is export {
     }
 
     method TWEAK {
-        # 2d Array series arg => make into Series 
-        if $!series.first ~~ Array {
-            $!series = gather {
-                for $!series[*;] -> $s {
-                    take Series.new($s)    
-                }
-            }.Array
-        }
-
-        # case when series arg is Array of Pairs (no index)
+        # series arg is Array of Pairs (no index)
         if $!series.first ~~ Pair {
             die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
-
-            for |$!series -> $p {
-                $!row-count max= $p.value.elems
-            }
 
             # make Series if not provided 
             $!series = gather {
@@ -182,12 +169,17 @@ class DataFrame does Positional does Iterable is export {
                     $!columns.push: $p;
                 }
             }.Array
-        } else {
-            die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
 
-            #iamerejh (make row count in all cases
-            for |$!series -> $p {
-                $!row-count max= $p.value.elems
+        } else {
+
+            # series arg is 2d Array => make into Series 
+            if $!series.first ~~ Array {
+                die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+                $!series = gather {
+                    for $!series[*;] -> $s {
+                        take Series.new($s)    
+                    }
+                }.Array
             }
 
             # make columns into Array of Pairs (alpha3 => Dan::Series)
@@ -198,6 +190,11 @@ class DataFrame does Positional does Iterable is export {
                     take ( ( $!columns ?? $!columns[$i++] !! $alpha3[$i++] ) => $s )
                 }
             }.Array
+        }
+
+        # make row count in all cases
+        for |$!series -> $p {
+            $!row-count max= $p.data.elems
         }
     }
 
