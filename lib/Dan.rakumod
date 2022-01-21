@@ -146,11 +146,14 @@ class DataFrame does Positional does Iterable is export {
     has Array $.series is required;
     has Array(List) $.index;
     has Array(List) $.columns;
-    has Int $!row-count;
 
     # Positional series arg => redispatch as Named
     multi method new( $series, *%h ) {
         samewith( :$series, |%h )
+    }
+
+    method row-count {
+        return my $r-c max= $_.data.elems for |$!series;
     }
 
     method TWEAK {
@@ -163,18 +166,19 @@ class DataFrame does Positional does Iterable is export {
                 for |$!series -> $p {
                     given $p.value {
                         when Series { take $p.value }
-                        when Real   { take Series.new( $_, index => [0..^$!row-count] ) }
-                        when Date   { take Series.new( $_, index => [0..^$!row-count] ) }
+                        when Real   { take Series.new( $_, index => [0..^$.row-count()] ) }
+                        when Date   { take Series.new( $_, index => [0..^$.row-count()] ) }
                     }
                     $!columns.push: $p;
                 }
             }.Array
 
         } else {
-
             # series arg is 2d Array => make into Series 
             if $!series.first ~~ Array {
                 die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+
+                # make Series from array columns
                 $!series = gather {
                     for $!series[*;] -> $s {
                         take Series.new($s)    
@@ -191,19 +195,15 @@ class DataFrame does Positional does Iterable is export {
                 }
             }.Array
         }
-
-        # make row count in all cases
-        for |$!series -> $p {
-            $!row-count max= $p.data.elems
-        }
     }
 
     method Str {
+
         # i is inner,       j is outer
         # i is cols across, j is rows down
         # i0 is index col , j0 is row header
         gather {
-            loop ( my $j=0; $j <= $!row-count ; $j++ ) {
+            loop ( my $j=0; $j <= $.row-count ; $j++ ) {
                 loop ( my $i=0; $i <= $!columns.elems ; $i++ ) {
                     given $j, $i {
                         when 0,0  { take "\t" }
