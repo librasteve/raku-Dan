@@ -132,14 +132,18 @@ df2 = pd.DataFrame(
    ...:     }
    ...: )
 
+FIXME dtype coerce to Num for C
+#]
+
 my \df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
         C => Series.new(1, index => [0..^4], dtype => "Num"),
+        D => [[3] xx 4],
+        E => Categorical.new(<test train test train>),
 ]);
 dd df2;
 say ~df2;
-#]
 
 #`[
 Notes:
