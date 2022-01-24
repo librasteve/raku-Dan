@@ -145,6 +145,9 @@ say ~df2; say "=============================================";
 
 say df2.dtypes;
 
+say df.index;
+say df.columns.keys;
+say df.data;
 #`[
 Notes:
 - NaN is raku built in

@@ -304,18 +304,19 @@ class DataFrame does Positional does Iterable is export {
         @out-cols.unshift: '';
 
         # rows (incl. row headers)
-        my @out-rows = [];
-        loop ( my $j=1; $j <= $.row-elems; $j++ ) {
-            @out-rows.push: gather {
-                loop ( my $i=0; $i <= $!columns.elems; $i++ ) {
-                    given $j, $i {
-                        when *,0  { take ~$!index[$j-1] }
-                        when 0,*  { take ~$!columns[$i-1].key }
-                        default   { take ~$!columns[$i-1].value.data[$j-1] }
+        my @out-rows = gather {
+            loop ( my $j=1; $j <= $.row-elems; $j++ ) {
+                take gather {
+                    loop ( my $i=0; $i <= $!columns.elems; $i++ ) {
+                        given $j, $i {
+                            when *,0  { take ~$!index[$j-1] }
+                            when 0,*  { take ~$!columns[$i-1].key }
+                            default   { take ~$!columns[$i-1].value.data[$j-1] }
+                        }
                     }
-                }
-            }.Array
-        }
+                }.Array
+            }
+        }.Array;
 
         # set table options 
         my %options = %(
@@ -339,6 +340,22 @@ class DataFrame does Positional does Iterable is export {
 
         my @table = lol2table(@out-cols, @out-rows, |%options);
         @table.join("\n")
+    }
+
+    method data {
+        # i is inner,       j is outer
+        # i is cols across, j is rows down
+        # no headers, just data elems
+
+        gather {
+            loop ( my $j=0; $j < $.row-elems; $j++ ) {
+                take gather {
+                    loop ( my $i=0; $i < $!columns.elems; $i++ ) {
+                        take ~$!columns[$i].value.data[$j]
+                    }
+                }.Array
+            }
+        }.Array
     }
 
     method of {
