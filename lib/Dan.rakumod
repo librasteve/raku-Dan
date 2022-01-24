@@ -25,6 +25,11 @@ class Categorical does Positional does Iterable is export {
         samewith( :$data, |%h )
     }
 
+    # Output
+    method dtype {
+        Str.^name
+    }
+
     # Positional role support 
     # viz. https://docs.raku.org/type/Positional
 
@@ -61,7 +66,7 @@ class Categorical does Positional does Iterable is export {
 class Series does Positional does Iterable is export {
     has Array $.data is required;
     has Array(List) $.index;
-    has Str   $.dtype;
+    has Any:U $.dtype;      #ie. type object
     has Str   $.name;
     has Bool  $.copy;
 
@@ -73,15 +78,25 @@ class Series does Positional does Iterable is export {
     }
 
     # Real (scalar) data arg => populate Array & redispatch
-    multi method new( Real :$data, :$index, *%h ) {
+    multi method new( Real:D :$data, :$index, *%h ) {
         die "index required if data ~~ Real" unless $index;
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
+    # Str (scalar) data arg => populate Array & redispatch
+    multi method new( Str:D :$data, :$index, *%h ) {
+        die "index required if data ~~ Str" unless $index;
+        samewith( data => ($data xx $index.elems).Array, :$index, |%h )
+    }
+
     # Date (scalar) data arg => populate Array & redispatch
-    multi method new( Date :$data, :$index, *%h ) {
+    multi method new( Date:D :$data, :$index, *%h ) {
         die "index required if data ~~ Date" unless $index;
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
+    }
+
+    multi method dtype {
+        $!dtype.^name       #provide ^name of type object eg. for output
     }
 
     method TWEAK {
@@ -108,18 +123,24 @@ class Series does Positional does Iterable is export {
             }.Array
         }
 
-        # auto set dtype
-        my %dtypes = (); 
-        for |$!data -> $d {
-            %dtypes{$d.^name} = 1;
+        # auto set dtype if not set from args
+        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
+
+            my %dtypes = (); 
+            for |$!data -> $d {
+                %dtypes{$d.^name} = 1;
+            }
+
+            given %dtypes.keys.all {
+                when 'Str'  { $!dtype = Str }
+                when 'Rat'  { $!dtype = Rat }
+                when 'Num'  { $!dtype = Num }
+                when 'Int'  { $!dtype = Int }
+                when 'Bool' { $!dtype = Bool }
+                when 'Date' { $!dtype = Date }
+            }
         }
-        if %dtypes<Bool>:exists  { $!dtype = 'Bool' }
-        if %dtypes<Int>:exists   { $!dtype = 'Int' }
-        if %dtypes<Num>:exists   { $!dtype = 'Num' }
-        if %dtypes<Date>:exists  { $!dtype = 'Date' }
-        ##FIXME do as .any junction on keys?
-        ##FIXME add Str?
-        ##FIXME manually set dtype?
+
     }
 
     ### Outputs ###
@@ -129,7 +150,7 @@ class Series does Positional does Iterable is export {
     }
 
     method Str {
-        $!index.join("\n") ~ "\ndtype: $!dtype"
+        $!index.join("\n") ~ "\ndtype: " ~ $!dtype.^name
     }
 
     ### Role Support ###
@@ -219,6 +240,7 @@ class DataFrame does Positional does Iterable is export {
                     given $p.value {
                         when Series      { take $p.value }
                         when Array       { take Series.new( $_ ) }
+                        when Str         { take Series.new( $_, index => [0..^$.row-elems] ) }
                         when Real        { take Series.new( $_, index => [0..^$.row-elems] ) }
                         when Date        { take Series.new( $_, index => [0..^$.row-elems] ) }
                         when Categorical { take $p.value }
@@ -260,6 +282,16 @@ class DataFrame does Positional does Iterable is export {
         } else {
             $!index = [0..^$.row-elems];
         }
+    }
+
+    ### Getter & Output Methods ###
+
+    method dtypes {
+        gather {
+            for |$!columns -> $p {
+                take $p.key ~ ' => ' ~ $p.value.dtype;
+            }
+        }.join("\n")
     }
 
     method Str {
