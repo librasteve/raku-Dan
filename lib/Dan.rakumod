@@ -227,14 +227,13 @@ class DataFrame does Positional does Iterable is export {
     }
 
     method TWEAK {
-        # column values
-        my $alpha3 = 'A'..'ZZZ';
-
         # series arg is Array of Pairs (no index)
         if $!series.first ~~ Pair {
             die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
 
-            # coerce each series value into Series type if not provided 
+            my @labels = $!series.map(*.key);
+
+            # make series a plain Array of Series objects 
             $!series = gather {
                 for |$!series -> $p {
                     given $p.value {
@@ -248,10 +247,10 @@ class DataFrame does Positional does Iterable is export {
                 }
             }.Array;
 
-            # make columns into Array of Pairs (alpha3 => Dan::Series)
+            # make columns into Array of Pairs (label => Series) 
             my $i = 0;
             for |$!series -> $s {
-                $!columns.push: $alpha3[$i++] => $s
+                $!columns.push: @labels[$i++] => $s
             }
 
         } else {
@@ -268,6 +267,8 @@ class DataFrame does Positional does Iterable is export {
             }
 
             # make columns into Array of Pairs (alpha3 => Dan::Series)
+            my $alpha3 = 'A'..'ZZZ';
+
             $!columns = gather {
                 my $i = 0;
                 for |$!series -> $s {
