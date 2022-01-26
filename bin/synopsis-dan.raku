@@ -13,7 +13,9 @@ my \s = $;
 
 #`[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
-s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
+#s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
+s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
+s.name = "john";
 
 say ~s; say "=============================================";
 #]
@@ -131,7 +133,6 @@ df2 = pd.DataFrame(
    ...:         "F": "foo",
    ...:     }
    ...: )
-#]
 
 my \df2 = DataFrame.new([
         A => 1.0,
@@ -142,12 +143,16 @@ my \df2 = DataFrame.new([
         F => "foo",
 ]);
 say ~df2; say "=============================================";
-
 say df2.dtypes;
+#]
 
 say df.index;
 say df.columns.keys;
 say df.data;
+
+# Positional Access
+say df.elems;
+say ~df[2];
 #`[
 Notes:
 - NaN is raku built in

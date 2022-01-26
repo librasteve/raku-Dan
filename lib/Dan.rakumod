@@ -12,6 +12,10 @@ Todos
 - operators
 - hyper
 - META6.json with deps
+- df.describe
+- df.T (transpose)
+- df.sort
+- coerce to dtype (on new or get value?)
 #]
 
 
@@ -19,6 +23,7 @@ my $db = 0;               #debug
 
 class Categorical does Positional does Iterable is export {
     has Array(List) $.data is required;
+    has Str         $.name is rw;
 
     # Positional constructor
     multi method new( $data, *%h ) {
@@ -64,11 +69,11 @@ class Categorical does Positional does Iterable is export {
 }
 
 class Series does Positional does Iterable is export {
-    has Array $.data is required;
-    has Array(List) $.index;
-    has Any:U $.dtype;      #ie. type object
-    has Str   $.name;
-    has Bool  $.copy;
+    has Array       $.data is required;       #Array of data elements
+    has Array(List) $.index;                  #Array of Pairs (label => data element)
+    has Any:U       $.dtype;                  #ie. type object
+    has Str         $.name is rw;
+    has Bool        $.copy;
 
     ### Constructors ###
 
@@ -131,13 +136,22 @@ class Series does Positional does Iterable is export {
                 %dtypes{$d.^name} = 1;
             }
 
-            given %dtypes.keys.all {
-                when 'Str'  { $!dtype = Str }
-                when 'Rat'  { $!dtype = Rat }
+            given %dtypes.keys.any {
+                # if any are Str/Date, then whole Series must be
+                when 'Str'  { 
+                    $!dtype = Str;
+                    die "Cannot mix other dtypes with Str!" unless %dtypes.keys.all ~~ 'Str'
+                }
+                when 'Date' { 
+                    $!dtype = Date;
+                    die "Cannot mix other dtypes with Date!" unless %dtypes.keys.all ~~ 'Date'
+                }
+
+                # Real types are handled in descending sequence
                 when 'Num'  { $!dtype = Num }
+                when 'Rat'  { $!dtype = Rat }
                 when 'Int'  { $!dtype = Int }
                 when 'Bool' { $!dtype = Bool }
-                when 'Date' { $!dtype = Date }
             }
         }
 
@@ -150,7 +164,11 @@ class Series does Positional does Iterable is export {
     }
 
     method Str {
-        $!index.join("\n") ~ "\ndtype: " ~ $!dtype.^name
+        my $attr-str = gather {
+            take "name: " ~$!name if $!name;
+            take "dtype: " ~$!dtype.^name if $!dtype.^name !~~ 'Any';
+        }.join(', ');
+        $!index.join("\n") ~ "\n" ~ $attr-str;
     }
 
     ### Role Support ###
@@ -208,15 +226,16 @@ class Series does Positional does Iterable is export {
 }
 
 class DataFrame does Positional does Iterable is export {
-    has Array $.series is required;
-    has Array(List) $.index;
-    has Array(List) $.columns;
+    has Array       $.series is required;     #Array of Series
+    has Array(List) $.columns;                #Array of Pairs (label => Series)
+    has Array(List) $.index;                  #Array (of row header)
 
     # Positional series arg => redispatch as Named
     multi method new( $series, *%h ) {
         samewith( :$series, |%h )
     }
 
+    # helper method
     method  row-elems {
         my $row-elems = 0;
         for |$!series {
@@ -234,15 +253,16 @@ class DataFrame does Positional does Iterable is export {
             my @labels = $!series.map(*.key);
 
             # make series a plain Array of Series objects 
+            # iamerejh ... make Series with col key as name, index as index
             $!series = gather {
                 for |$!series -> $p {
                     given $p.value {
                         when Series      { take $p.value }
+                        when Categorical { take $p.value }
                         when Array       { take Series.new( $_ ) }
                         when Str         { take Series.new( $_, index => [0..^$.row-elems] ) }
                         when Real        { take Series.new( $_, index => [0..^$.row-elems] ) }
                         when Date        { take Series.new( $_, index => [0..^$.row-elems] ) }
-                        when Categorical { take $p.value }
                     }
                 }
             }.Array;
@@ -359,9 +379,60 @@ class DataFrame does Positional does Iterable is export {
         }.Array
     }
 
+    ### Role Support ###
+
+    # Positional role support 
+    # viz. https://docs.raku.org/type/Positional
+
     method of {
-        Mu
+        Series
     }
+    method elems {
+        $!columns.elems
+    }
+    method AT-POS( $p ) {
+        $!columns[$p].value;
+    }
+    method EXISTS-POS( $p ) {
+        0 <= $p < $!columns.elems ?? True !! False
+    }
+
+#`[
+    # LIMITED Associative role support 
+    # viz. https://docs.raku.org/type/Associative
+    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
+
+    method keyof {
+        Str(Any) 
+    }
+    method AT-KEY( $k ) {
+        for |$!index -> $p {
+            return $p.value if $p.key ~~ $k
+        }
+    }
+    method EXISTS-KEY( $k ) {
+        for |$!index -> $p {
+            return True if $p.key ~~ $k
+        }
+    }
+
+    # Iterable role support 
+    # viz. https://docs.raku.org/type/Iterable
+
+    method iterator {
+        $!data.iterator
+    }
+    method flat {
+        $!data.flat
+    }
+    method lazy {
+        $!data.lazy
+    }
+    method hyper {
+        $!data.hyper
+    }
+#]
 }
 
 #EOF
