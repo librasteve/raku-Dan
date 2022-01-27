@@ -11,7 +11,7 @@ my \s = $;
 
 ### Declarations ###
 
-#`[
+#[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 #s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
@@ -134,6 +134,7 @@ df2 = pd.DataFrame(
    ...:     }
    ...: )
 
+#]
 my \df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
@@ -144,7 +145,6 @@ my \df2 = DataFrame.new([
 ]);
 say ~df2; say "=============================================";
 say df2.dtypes;
-#]
 
 say df.index;
 say df.columns.keys;

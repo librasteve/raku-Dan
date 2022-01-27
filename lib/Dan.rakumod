@@ -18,59 +18,12 @@ Todos
 - coerce to dtype (on new or get value?)
 #]
 
-
 my $db = 0;               #debug
 
-class Categorical does Positional does Iterable is export {
-    has Array(List) $.data is required;
-    has Str         $.name is rw;
-
-    # Positional constructor
-    multi method new( $data, *%h ) {
-        samewith( :$data, |%h )
-    }
-
-    # Output
-    method dtype {
-        Str.^name
-    }
-
-    # Positional role support 
-    # viz. https://docs.raku.org/type/Positional
-
-    method of {
-        Str 
-    }
-    method elems {
-        $!data.elems
-    }
-    method AT-POS( $p ) {
-        $!data[$p]
-    }
-    method EXISTS-POS( $p ) {
-        0 <= $p < $!data.elems ?? True !! False
-    }
-
-    # Iterable role support 
-    # viz. https://docs.raku.org/type/Iterable
-
-    method iterator {
-        $!data.iterator
-    }
-    method flat {
-        $!data.flat
-    }
-    method lazy {
-        $!data.lazy
-    }
-    method hyper {
-        $!data.hyper
-    }
-}
 
 class Series does Positional does Iterable is export {
-    has Array       $.data is required;       #Array of data elements
-    has Array(List) $.index;                  #Array of Pairs (label => data element)
+    has Array(List) $.data is required;       #Array of data elements
+    has Array(List) $.index;                  #Array of Pairs (index element => data element)
     has Any:U       $.dtype;                  #ie. type object
     has Str         $.name is rw;
     has Bool        $.copy;
@@ -225,9 +178,16 @@ class Series does Positional does Iterable is export {
     }
 }
 
+class Categorical is Series is export {
+    # Output
+    method dtype {
+        Str.^name
+    }
+}
+
 class DataFrame does Positional does Iterable is export {
     has Array       $.series is required;     #Array of Series
-    has Array(List) $.columns;                #Array of Pairs (label => Series)
+    has Array(List) $.columns;                #Array of Pairs (column label => Series)
     has Array(List) $.index;                  #Array (of row header)
 
     # Positional series arg => redispatch as Named
@@ -235,7 +195,7 @@ class DataFrame does Positional does Iterable is export {
         samewith( :$series, |%h )
     }
 
-    # helper method
+    # helper methods
     method  row-elems {
         my $row-elems = 0;
         for |$!series {
@@ -251,29 +211,36 @@ class DataFrame does Positional does Iterable is export {
             die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
 
             my @labels = $!series.map(*.key);
+            my $ixat = ( index => [0..^$.row-elems] );
 
             # make series a plain Array of Series objects 
-            # iamerejh ... make Series with col key as name, index as index
+            # make or update Series with col key as name, index as index
             $!series = gather {
                 for |$!series -> $p {
+                    my $nmat = ( name => ~$p.key );
                     given $p.value {
-                        when Series      { take $p.value }
-                        when Categorical { take $p.value }
-                        when Array       { take Series.new( $_ ) }
-                        when Str         { take Series.new( $_, index => [0..^$.row-elems] ) }
-                        when Real        { take Series.new( $_, index => [0..^$.row-elems] ) }
-                        when Date        { take Series.new( $_, index => [0..^$.row-elems] ) }
+                        when Series      { take $_; $_.name = ~$p.key }
+                        when Array       { take Series.new( $_, |$nmat ) }
+                        when Str         { take Series.new( $_, |$nmat, |$ixat ) }
+                        when Real        { take Series.new( $_, |$nmat, |$ixat ) }
+                        when Date        { take Series.new( $_, |$nmat, |$ixat ) }
                     }
                 }
             }.Array;
 
-            # make columns into Array of Pairs (label => Series) 
+            # make columns into Array of Pairs (column label => Series) 
             my $i = 0;
             for |$!series -> $s {
                 $!columns.push: @labels[$i++] => $s
             }
 
         } else {
+            #`[iamerejh - handle index
+            # NB - need to move the series output to assoc index
+            dd $!index;
+            my $ixat = ( index => $!index ?? $!index !! [0..^$.row-elems] );
+            #]
+
             # series arg is 2d Array => make into Series 
             if $!series.first ~~ Array {
                 die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
@@ -311,8 +278,7 @@ class DataFrame does Positional does Iterable is export {
         gather {
             for |$!columns -> $p {
                 take $p.key ~ ' => ' ~ $p.value.dtype;
-            }
-        }.join("\n")
+            } }.join("\n")
     }
 
     method Str {
