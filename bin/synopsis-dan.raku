@@ -149,10 +149,18 @@ say df2.dtypes;
 say df.index;
 say df.columns.keys;
 say df.data;
+say df.elems;
 
 # Positional Access
-say df.elems;
-say ~df[2];
+#say ~df[2];
+#say df⸨1⸩;
+say df[1];
+#say df⸨0..2⸩;
+say df[0..2];
+#say df[0..2].first.^name;
+
+
+
 #`[
 Notes:
 - NaN is raku built in

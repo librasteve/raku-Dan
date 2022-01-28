@@ -220,8 +220,7 @@ class DataFrame does Positional does Iterable is export {
                     my $name = ~$p.key;
                     given $p.value {
                         #FIXME may be more efficient to keep when Series and reset name/index
-                        #need new Series index setter method
-                        #when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
+                        #ie. new Series index setter method => when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
 
                         when Series { take Series.new( $_.data, :$name ) }
                         when Array  { take Series.new( $_, :$name ) }
@@ -378,6 +377,7 @@ class DataFrame does Positional does Iterable is export {
         $!columns.elems
     }
     method AT-POS( $p ) {
+    say "yo";
         $!columns[$p].value;
     }
     method EXISTS-POS( $p ) {
@@ -420,6 +420,17 @@ class DataFrame does Positional does Iterable is export {
         $!data.hyper
     }
 #]
+}
+
+multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer ) is export {
+    #iamerejh
+    say "ho";
+    gather {
+        for @slicer -> $p {    
+            take $df.AT-POS($p) 
+        }
+    }.Array;
+    DataFrame.new($_)
 }
 
 #EOF
