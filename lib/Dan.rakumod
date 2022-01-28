@@ -211,19 +211,23 @@ class DataFrame does Positional does Iterable is export {
             die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
 
             my @labels = $!series.map(*.key);
-            my $ixat = ( index => [0..^$.row-elems] );
+            my $index = [0..^$.row-elems];
 
-            # make series a plain Array of Series objects 
-            # make or update Series with col key as name, index as index
+            # make series a plain Array of Series elems 
+            # make or update each Series with col key as name, index as index
             $!series = gather {
                 for |$!series -> $p {
-                    my $nmat = ( name => ~$p.key );
+                    my $name = ~$p.key;
                     given $p.value {
-                        when Series      { take $_; $_.name = ~$p.key }
-                        when Array       { take Series.new( $_, |$nmat ) }
-                        when Str         { take Series.new( $_, |$nmat, |$ixat ) }
-                        when Real        { take Series.new( $_, |$nmat, |$ixat ) }
-                        when Date        { take Series.new( $_, |$nmat, |$ixat ) }
+                        #FIXME may be more efficient to keep when Series and reset name/index
+                        #need new Series index setter method
+                        #when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
+
+                        when Series { take Series.new( $_.data, :$name ) }
+                        when Array  { take Series.new( $_, :$name ) }
+                        when Str    { take Series.new( $_, :$name, :$index ) }
+                        when Real   { take Series.new( $_, :$name, :$index ) }
+                        when Date   { take Series.new( $_, :$name, :$index ) }
                     }
                 }
             }.Array;
@@ -235,27 +239,44 @@ class DataFrame does Positional does Iterable is export {
             }
 
         } else {
-            #`[iamerejh - handle index
-            # NB - need to move the series output to assoc index
-            dd $!index;
-            my $ixat = ( index => $!index ?? $!index !! [0..^$.row-elems] );
-            #]
 
-            # series arg is 2d Array => make into Series 
+            # set up column labels
+            my $alpha3 = 'A'..'ZZZ';
+
+            my @labels = gather {
+                for ^$!series.first.elems -> $i {
+                    take ( $!columns ?? $!columns[$i] !! $alpha3[$i] )
+                }
+            }
+
+            # set up index attr
+            my $index = $!index ?? $!index !! [0..^$.row-elems];
+
+            # series arg is 2d Array => make into Array of Series 
             if $!series.first ~~ Array {
                 die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
 
-                # make Series from array columns
+                # make Series from 2d Array columns
                 $!series = gather {
-                    for $!series[*;] -> $s {
-                        take Series.new($s)    
+                    for $!series[*;] -> $d {
+                        my $name = @labels.shift;
+                        take Series.new( $d, :$name, :$index )
                     }
                 }.Array
+
+            } else {
+
+                # make Series from Array of Series 
+                $!series = gather {
+                    for $!series -> $s {
+                        my $name = @labels.shift;
+                        take Series.new( $s.data, :$name, :$index )
+                    }
+                }.Array
+
             }
 
-            # make columns into Array of Pairs (alpha3 => Dan::Series)
-            my $alpha3 = 'A'..'ZZZ';
-
+            # make columns into Array of Pairs (alpha3 => Series)
             $!columns = gather {
                 my $i = 0;
                 for |$!series -> $s {
