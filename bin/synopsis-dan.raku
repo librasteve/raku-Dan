@@ -47,7 +47,7 @@ say s{2};
 say s<c>;
 say s{"c"};
 say s.data;
-say s.index;
+say s.index.map(*.key);
 say s.of;
 say s.dtype;
 #]
@@ -152,10 +152,15 @@ say df.data;
 say df.elems;
 
 # Positional Access
-#say ~df[2];
-say ~df[0..2];
+say ~df[2];
+my \df3 = df[0..2];
+say ~df3;
+#iamerejh - fix Positional
+#dd df[0..2];
 
-
+# Associative Access
+say dates[0];
+say ~df{dates[0]}; 
 
 
 #`[

@@ -112,10 +112,6 @@ class Series does Positional does Iterable is export {
 
     ### Outputs ###
 
-    method index {
-        $!index.map(*.key)
-    }
-
     method Str {
         my $attr-str = gather {
             take "name: " ~$!name if $!name;
@@ -383,22 +379,29 @@ class DataFrame does Positional does Iterable is export {
         0 <= $p < $!columns.elems ?? True !! False
     }
 
-#`[
     # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
-    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # DataFrame just implements the Assoc. methods, but does not do the Assoc. role
     # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
 
     method keyof {
         Str(Any) 
     }
     method AT-KEY( $k ) {
-        for |$!index -> $p {
-            return $p.value if $p.key ~~ $k
-        }
+        my @new =gather {
+            for |$!columns -> $col {
+                my $series := $col.value;
+                for |$series.index -> $row {
+                    take $row.value if $row.key ~~ $k
+                }
+            }
+        }.Array;
+
+        Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
     }
+#`[
     method EXISTS-KEY( $k ) {
-        for |$!index -> $p {
+        for |$!columns -> $p {
             return True if $p.key ~~ $k
         }
     }
@@ -428,6 +431,7 @@ multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer ) is export {
         }
     }.Array;
 
+    dd @new;
     DataFrame.new( @new, index => |@new.first.index )
 }
 
