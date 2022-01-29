@@ -267,7 +267,7 @@ class DataFrame does Positional does Iterable is export {
 
                 # make Series from Array of Series 
                 $!series = gather {
-                    for $!series -> $s {
+                    for |$!series -> $s {
                         my $name = @labels.shift;
                         take Series.new( $s.data, :$name, :$index )
                     }
@@ -377,7 +377,6 @@ class DataFrame does Positional does Iterable is export {
         $!columns.elems
     }
     method AT-POS( $p ) {
-    say "yo";
         $!columns[$p].value;
     }
     method EXISTS-POS( $p ) {
@@ -423,14 +422,13 @@ class DataFrame does Positional does Iterable is export {
 }
 
 multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer ) is export {
-    #iamerejh
-    say "ho";
-    gather {
+    my @new = gather {
         for @slicer -> $p {    
             take $df.AT-POS($p) 
         }
     }.Array;
-    DataFrame.new($_)
+
+    DataFrame.new( @new, index => |@new.first.index )
 }
 
 #EOF

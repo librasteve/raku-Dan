@@ -153,11 +153,8 @@ say df.elems;
 
 # Positional Access
 #say ~df[2];
-#say df⸨1⸩;
-say df[1];
-#say df⸨0..2⸩;
-say df[0..2];
-#say df[0..2].first.^name;
+say ~df[0..2];
+
 
 
 
