@@ -151,16 +151,17 @@ say df.columns.keys;
 say df.data;
 say df.elems;
 
+say "=============================================";
 # Positional Access
 say ~df[2];
-my \df3 = df[0..2];
-say ~df3;
-#iamerejh - fix Positional
-#dd df[0..2];
+say ~df[0..1];
+say ~df[0,3];
 
+say "=============================================";
 # Associative Access
-say dates[0];
+#say dates[0];
 say ~df{dates[0]}; 
+say ~df<A C>;
 
 
 #`[

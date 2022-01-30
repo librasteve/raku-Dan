@@ -184,7 +184,7 @@ class Categorical is Series is export {
 class DataFrame does Positional does Iterable is export {
     has Array       $.series is required;     #Array of Series
     has Array(List) $.columns;                #Array of Pairs (column label => Series)
-    has Array(List) $.index;                  #Array (of row header)
+    has Array(List) $.index;                  #Array (of row headers)
 
     # Positional series arg => redispatch as Named
     multi method new( $series, *%h ) {
@@ -212,14 +212,19 @@ class DataFrame does Positional does Iterable is export {
             # make series a plain Array of Series elems 
             # make or update each Series with col key as name, index as index
             $!series = gather {
+                # iterate series argument
                 for |$!series -> $p {
                     my $name = ~$p.key;
                     given $p.value {
                         #FIXME may be more efficient to keep when Series and reset name/index
-                        #ie. new Series index setter method => when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
+                        #ie. new Series index setter method => 
+                        #when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
 
+                        # handle Series/Array with row-elems
                         when Series { take Series.new( $_.data, :$name ) }
                         when Array  { take Series.new( $_, :$name ) }
+
+                        # handle Scalar item (set index to expand)
                         when Str    { take Series.new( $_, :$name, :$index ) }
                         when Real   { take Series.new( $_, :$name, :$index ) }
                         when Date   { take Series.new( $_, :$name, :$index ) }
@@ -399,6 +404,19 @@ class DataFrame does Positional does Iterable is export {
 
         Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
     }
+
+    method AT-KEY-N( $k ) {
+        my @new =gather {
+            for |$!columns -> $col {
+                my $series := $col.value;
+                for |$series.index -> $row {
+                    take $row.value if $row.key ~~ $k
+                }
+            }
+        }.Array;
+
+        #Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
+    }
 #`[
     method EXISTS-KEY( $k ) {
         for |$!columns -> $p {
@@ -424,15 +442,31 @@ class DataFrame does Positional does Iterable is export {
 #]
 }
 
-multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer ) is export {
-    my @new = gather {
+### Postcircumfix overrides to handle slices
+multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer where Range|List ) is export {
+    my @columns = [];
+
+    my @series = gather {
         for @slicer -> $p {    
-            take $df.AT-POS($p) 
+            @columns.push: $df.columns[$p].key;
+            take $df.columns[$p].value;
         }
     }.Array;
 
-    dd @new;
-    DataFrame.new( @new, index => |@new.first.index )
+    DataFrame.new( :@series, :@columns, index => |@series.first.index.map(*.key) )
 }
+
+multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export {
+    my @new = gather {
+        for @slicer -> $p {    
+        die "yo";
+        #iamerejh
+            take $df.AT-KEY-N($p) 
+        }
+    }.Array;
+
+    DataFrame.new( @new, index => |@new.first.index.map(*.key) );
+}
+
 
 #EOF
