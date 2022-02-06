@@ -1,5 +1,13 @@
 # need to swap i<=>j, or not
 
+#`[ main2core-data
+- test
+- data to core
+- index to pos
+-- Series
+
+#]
+
 #viz. https://stackoverflow.com/questions/70976231
 
 class Series does Positional {
