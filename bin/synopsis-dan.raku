@@ -7,6 +7,26 @@ use Dan;
 #viz. https://pandas.pydata.org/docs/user_guide/10min.html
 #viz. https://pandas.pydata.org/docs/user_guide/dsintro.html#dsintro
 
+### DataSlice ###
+
+# used for the row (or column) of a DataFrame
+
+my $ds = DataSlice.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
+#my $ds = DataSlice.new( data => [1, 3, 5, NaN, 6, 8] );
+dd $ds;
+say $ds.index;
+say $ds.data;
+say ~$ds;
+
+say $ds[1];
+say $ds[0..2];
+say $ds[*];
+
+say $ds{'b'};
+say $ds<b d>;
+
+die;
+
 my \s = $;    
 
 ### Declarations ###

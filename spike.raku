@@ -1,10 +1,27 @@
 # need to swap i<=>j, or not
 
+# new design
+- order df[row][col] ... thus ! Array of Series
+- has DataSlices @.ds;
+- so df[][] / []{} / {}[] / {}{} 
+- so df[]|{} returns Array @df-row aka DataSlice 
+-- (a transposed 'Series' with name = df.index[], index = cols, no dtype) 
+-- (Series is a child of DataSlice)
+- so AT-POS and AT-KEY - for slicing, etc.
+- so df[][]^ means postfix<^>( DataSlice:D $ds --> DataFrame )
+- so DataFrame.Series coerce to Series if only one column
+- so DataFrame.DataSlice coerce to DataSlice if only one row
+- so DataFrame has %.index, DataSlice has %.index %( Str label => Int pos )
+
 #`[ main2core-data
-- test
-- data to core
-- index to pos
+-- test - OK
 -- Series
+- data to @
+- index to % pos
+-- DataFrame
+- data to @ core
+- index to % pos
+- columns to % pos
 
 #]
 

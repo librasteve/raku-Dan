@@ -32,7 +32,78 @@ df2.B                  df2.duplicated
 #]
 
 my $db = 0;               #debug
+my @alpha3 = 'A'..'ZZZ';
 
+class DataSlice does Positional does Iterable is export {
+    has Str     $.name is rw = 'anon';
+    has Any     @.data is required;
+    has Int     %.index;
+
+    # accept index as List, make Hash
+    multi method new( List:D :$index, *%h ) {
+        samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
+    }
+
+    method TWEAK {
+        # default is DataFrame row
+        unless %!index {                            
+            %!index{ @alpha3[$_] } = $_ for ^@!data
+        }
+    }
+
+    method Str {
+        %.index.join("\n") ~ "\n" ~ "name: " ~ ~$!name;
+    }
+
+    ### Role Support ###
+
+    # Positional role support 
+    # viz. https://docs.raku.org/type/Positional
+
+    method of {
+        Any
+    }
+    method elems {
+        @!data.elems
+    }
+    method AT-POS( $p ) {
+        @!data[$p]
+    }
+    method EXISTS-POS( $p ) {
+        0 <= $p < @!data.elems ?? True !! False
+    }
+
+    # LIMITED Associative role support 
+    # viz. https://docs.raku.org/type/Associative
+    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
+
+    method keyof {
+        Str(Any) 
+    }
+    method AT-KEY( $k ) {
+        @!data[%!index{$k}]
+    }
+    method EXISTS-KEY( $k ) {
+        %!index{$k}:exists
+    }
+
+    # Iterable role support 
+    # viz. https://docs.raku.org/type/Iterable
+
+    method iterator {
+        @!data.iterator
+    }
+    method flat {
+        @!data.flat
+    }
+    method lazy {
+        @!data.lazy
+    }
+    method hyper {
+        @!data.hyper
+    }
+}
 
 class Series does Positional does Iterable is export {
     has Array(List) $.data is required;       #Array of data elements
@@ -252,13 +323,9 @@ class DataFrame does Positional does Iterable is export {
             }
 
         } else {
-
-            # set up column labels
-            my $alpha3 = 'A'..'ZZZ';
-
             my @labels = gather {
                 for ^$!series.first.elems -> $i {
-                    take ( $!columns ?? $!columns[$i] !! $alpha3[$i] )
+                    take ( $!columns ?? $!columns[$i] !! @alpha3[$i] )
                 }
             }
 
@@ -293,7 +360,7 @@ class DataFrame does Positional does Iterable is export {
             $!columns = gather {
                 my $i = 0;
                 for |$!series -> $s {
-                    take ( ( $!columns ?? $!columns[$i++] !! $alpha3[$i++] ) => $s )
+                    take ( ( $!columns ?? $!columns[$i++] !! @alpha3[$i++] ) => $s )
                 }
             }.Array
         }
