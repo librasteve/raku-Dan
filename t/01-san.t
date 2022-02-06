@@ -9,6 +9,10 @@ use Dan;
 
 my \s = $;    
 
+## Series
+
+# Constructors
+
 s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
 s.name = "john";
 is ~s, "0\t1\n1\t3\n2\t5\n3\tNaN\n4\t6\n5\t8\nname: john, dtype: Num",      'new Series'; 
@@ -22,6 +26,8 @@ is ~s, "b\t1\na\t0\nc\t2\ndtype: Int",                                      'Arr
 s = Series.new(5e0, index => <a b c d e>);
 is ~s, "a\t5\nb\t5\nc\t5\nd\t5\ne\t5\ndtype: Num",                          'expand Scalar';
 
+# Accessors
+
 ok s[1]==5,                                                                 'Positional';
 ok s{2}~~Nil,                                                               'Associative not Int';
 ok s<c>==5,                                                                 'Associative <>';
@@ -31,30 +37,26 @@ ok s.index.map(*.key) == 'a'..'e',                                          '.in
 ok s.of ~~ Num,                                                             '.of';
 ok s.dtype eq 'Num',                                                        '.dtype';
 
+
+# Operations 
+
+ok s[*] == 5 xx 5,                                                          'Whatever slice';
+ok s[] == 5 xx 5,                                                           'Zen slice';
+ok s[*-1] == 5,                                                             'Whatever Pos';
+ok s[0..2] == 5 xx 3,                                                       'Range slice';
+ok s[2] + 2 == 7,                                                           'Element math';
+ok s.map(*+2) == 7 xx 5,                                                    '.map math';
+ok ([+] s) == 25,                                                           '[] operator';
+ok s.hyper ~~ HyperSeq,                                                     '.hyper';
+ok (s >>+>> 2) == 7 xx 5,                                                   '>>+>>';
+ok (s >>+<< s) == 10 xx 5,                                                  '>>+<<';
+my \t = s; 
+ok ([+] t) == 25,                                                           'assignment';
+
 done-testing;
 die;
 
-
-#`[
-### Operations ###
-
-# Array Index Slices
-say s[*-1];
-say s[0..2];
-say s[2] + 2;
-
-# Math
-say s.map(*+2);
-say [+] s;
-
-# Hyper
-#dd s.hyper;
-say s >>+>> 2;
-say s >>+<< s;
-my \t = s; say ~t;
-#]
-
-### DataFrames ###
+## DataFrames
 
 #`[
 dates = pd.date_range("20130101", periods=6)
@@ -115,10 +117,4 @@ say ~df{dates[0]};
 #say ~df<A C>;
 
 
-#`[
-Notes:
-- NaN is raku built in
-- Series from Hash(Array) - order is unspecified (thus canonical is List of Pairs)
--
-#]
 
