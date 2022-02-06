@@ -156,12 +156,13 @@ say "=============================================";
 say ~df[2];
 say ~df[0..1];
 say ~df[0,3];
+##say ~df[0;1];
 
 say "=============================================";
 # Associative Access
 #say dates[0];
 say ~df{dates[0]}; 
-say ~df<A C>;
+#say ~df<A C>;
 
 
 #`[

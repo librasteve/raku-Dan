@@ -16,6 +16,19 @@ Todos
 - df.T (transpose)
 - df.sort
 - coerce to dtype (on new or get value?)
+
+df2.A                  df2.bool
+df2.abs                df2.boxplot
+df2.add                df2.C
+df2.add_prefix         df2.clip
+df2.add_suffix         df2.columns
+df2.align              df2.copy
+df2.all                df2.count
+df2.any                df2.combine
+df2.append             df2.D
+df2.apply              df2.describe
+df2.applymap           df2.diff
+df2.B                  df2.duplicated
 #]
 
 my $db = 0;               #debug
@@ -355,9 +368,9 @@ class DataFrame does Positional does Iterable is export {
         # i is cols across, j is rows down
         # no headers, just data elems
 
-        gather {
+        lazy gather {
             loop ( my $j=0; $j < $.row-elems; $j++ ) {
-                take gather {
+                take lazy gather {
                     loop ( my $i=0; $i < $!columns.elems; $i++ ) {
                         take ~$!columns[$i].value.data[$j]
                     }
@@ -378,6 +391,9 @@ class DataFrame does Positional does Iterable is export {
         $!columns.elems
     }
     method AT-POS( $p ) {
+    ##method AT-POS( $p, $q? ) {
+        ##$.data[$p;$q // *]
+        ##$.data[$p]
         $!columns[$p].value;
     }
     method EXISTS-POS( $p ) {
@@ -457,7 +473,7 @@ multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer where Range|List ) is export
 }
 
 multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export {
-    my @new = gather {
+    my @series = gather {
         for @slicer -> $p {    
         die "yo";
         #iamerejh
@@ -465,7 +481,7 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export
         }
     }.Array;
 
-    DataFrame.new( @new, index => |@new.first.index.map(*.key) );
+    DataFrame.series( @series, index => |@series.first.index.map(*.key) );
 }
 
 
