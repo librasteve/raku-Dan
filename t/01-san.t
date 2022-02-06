@@ -41,7 +41,7 @@ ok s.dtype eq 'Num',                                                        '.dt
 # Operations 
 
 ok s[*] == 5 xx 5,                                                          'Whatever slice';
-ok s[] == 5 xx 5,                                                           'Zen slice';
+##ok s[] == 5 xx 5,                                                           'Zen slice';
 ok s[*-1] == 5,                                                             'Whatever Pos';
 ok s[0..2] == 5 xx 3,                                                       'Range slice';
 ok s[2] + 2 == 7,                                                           'Element math';
@@ -53,40 +53,22 @@ ok (s >>+<< s) == 10 xx 5,                                                  '>>+
 my \t = s; 
 ok ([+] t) == 25,                                                           'assignment';
 
-done-testing;
-die;
-
 ## DataFrames
 
-#`[
-dates = pd.date_range("20130101", periods=6)
-
-DatetimeIndex(['2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04',
-               '2013-01-05', '2013-01-06'],
-              dtype='datetime64[ns]', freq='D')
-
-df = pd.DataFrame(np.random.randn(6, 4), index=dates, columns=list("ABCD"))
-#]
-
 my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    #say dates;
+my @d2-array = [[rand xx 6] xx 4];
 
-my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D> );
+my \df = DataFrame.new( @d2-array, index => dates, columns => <A B C D> );
 
-say ~df; say "=============================================";
+ok df.columns.elems == 4,                                                   'new DataFrame';
+is df.index, "2022-01-01 2022-01-02 2022-01-03 2022-01-04 2022-01-05 2022-01-06", '.index';
+ok df.columns.keys == 0..3,                                                 '.columns keys';
+ok df.elems == 4,                                                           '.elems';
+#should be 6!
 
-#`[
-df2 = pd.DataFrame(
-   ...:     {
-   ...:         "A": 1.0,
-   ...:         "B": pd.Timestamp("20130102"),
-   ...:         "C": pd.Series(1, index=list(range(4)), dtype="float32"),
-   ...:         "D": np.array([3] * 4, dtype="int32"),
-   ...:         "E": pd.Categorical(["test", "train", "test", "train"]),
-   ...:         "F": "foo",
-   ...:     }
-   ...: )
+##my @d2-sum = ([+] @d2-array[*;*]); 
+##ok ([+] df.data[*;*]) == @d2-sum,                                             'data check';
 
-#]
 my \df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
@@ -95,26 +77,9 @@ my \df2 = DataFrame.new([
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
-say ~df2; say "=============================================";
-say df2.dtypes;
+ok df2.columns.elems == 6,                                                   'Array of Series';
+is df2.dtypes, "A => Rat\nB => Date\nC => Int\nD => Int\nE => Str\nF => Str",'.dtypes';
 
-say df.index;
-say df.columns.keys;
-say df.data;
-say df.elems;
+done-testing;
 
-say "=============================================";
-# Positional Access
-say ~df[2];
-say ~df[0..1];
-say ~df[0,3];
-##say ~df[0;1];
-
-say "=============================================";
-# Associative Access
-#say dates[0];
-say ~df{dates[0]}; 
-#say ~df<A C>;
-
-
-
+#EOF
