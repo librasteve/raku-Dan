@@ -12,7 +12,6 @@ use Dan;
 # used for the row (or column) of a DataFrame
 
 my $ds = DataSlice.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
-#my $ds = DataSlice.new( data => [1, 3, 5, NaN, 6, 8] );
 dd $ds;
 say $ds.index;
 say $ds.data;
@@ -24,18 +23,19 @@ say $ds[*];
 
 say $ds{'b'};
 say $ds<b d>;
+say "=============================================";
 
-die;
+
+### Series ###
 
 my \s = $;    
-
-### Declarations ###
 
 #[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 #s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
-s.name = "john";
+#s = Series.new(data => [1, 3, 5, NaN, 6, 8], name => "mary");                                   
+#s.name = "john";
 
 say ~s; say "=============================================";
 #]
@@ -47,6 +47,7 @@ say ~s; say "=============================================";
 
 #`[
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
+#]
 
 #canonical form is (ordered) Array of Pairs
 s = Series.new([b=>1, a=>0, c=>2]);
@@ -63,15 +64,17 @@ s = Series.new(5e0, index => <a b c d e>);
 say ~s; say "=============================================";
 
 say s[1];
-say s{2};
-say s<c>;
+#say s{2};
 say s{"c"};
+say s<c>;
 say s.data;
-say s.index.map(*.key);
+say s.index.sort(*.value).map(*.key);
 say s.of;
 say s.dtype;
-#]
 
+die;
+
+#`[[[
 ### Datatypes ###
 
 #`[
@@ -192,3 +195,4 @@ Notes:
 -
 #]
 
+#]]]

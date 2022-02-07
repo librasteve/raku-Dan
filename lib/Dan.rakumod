@@ -34,25 +34,38 @@ df2.B                  df2.duplicated
 my $db = 0;               #debug
 my @alpha3 = 'A'..'ZZZ';
 
-class DataSlice does Positional does Iterable is export {
+role DataSlice does Positional does Iterable is export {
     has Str     $.name is rw = 'anon';
-    has Any     @.data is required;
+    has Any     @.data;
     has Int     %.index;
+
+    ### Contructors ###
 
     # accept index as List, make Hash
     multi method new( List:D :$index, *%h ) {
         samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
     }
 
-    method TWEAK {
-        # default is DataFrame row
-        unless %!index {                            
-            %!index{ @alpha3[$_] } = $_ for ^@!data
-        }
+    ### Output Methods ###
+
+    method str-attrs {
+        %( :$.name ) 
     }
 
     method Str {
-        %.index.join("\n") ~ "\n" ~ "name: " ~ ~$!name;
+        my $data-str = gather {
+            for %!index.sort(*.values).map(*.key) -> $k {
+                take $k => @!data[%!index{$k}]
+            }
+        }.join("\n");
+
+        my $attr-str = gather {
+            for $.str-attrs.sort.map(*.kv).flat -> $k, $v {
+                take "$k: " ~$v
+            }
+        }.join(', ');
+
+        $data-str ~ "\n" ~ $attr-str
     }
 
     ### Role Support ###
@@ -75,17 +88,17 @@ class DataSlice does Positional does Iterable is export {
 
     # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
-    # Series just implements the Assoc. methods, but does not do the Assoc. role
+    # DataSlice just implements the Assoc. methods, but does not do the Assoc. role
     # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
 
     method keyof {
         Str(Any) 
     }
     method AT-KEY( $k ) {
-        @!data[%!index{$k}]
+        @!data[%.index{$k}]
     }
     method EXISTS-KEY( $k ) {
-        %!index{$k}:exists
+        %.index{$k}:exists
     }
 
     # Iterable role support 
@@ -105,20 +118,23 @@ class DataSlice does Positional does Iterable is export {
     }
 }
 
-class Series does Positional does Iterable is export {
-    has Array(List) $.data is required;       #Array of data elements
-    has Array(List) $.index;                  #Array of Pairs (index element => data element)
+class Series does DataSlice is export {
     has Any:U       $.dtype;                  #ie. type object
-    has Str         $.name is rw;
-    has Bool        $.copy;
 
     ### Constructors ###
 
-    # Positional data arg => redispatch as Named
+    # Positional data array arg => redispatch as Named
+    multi method new( @data, *%h ) {
+        samewith( :@data, |%h )
+    }
+    # Positional data scalar arg => redispatch as Named
     multi method new( $data, *%h ) {
         samewith( :$data, |%h )
     }
-
+    # accept index as List, make Hash
+    multi method new( List:D :$index, *%h ) {
+        samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
+    }
     # Real (scalar) data arg => populate Array & redispatch
     multi method new( Real:D :$data, :$index, *%h ) {
         die "index required if data ~~ Real" unless $index;
@@ -142,34 +158,34 @@ class Series does Positional does Iterable is export {
     }
 
     method TWEAK {
-        # make index from input Hash
-        if $!data.first ~~ Pair {
-            die "index not permitted if data is Array of Pairs" if $!index;
+        # make index & data from %(index => data) Hash
+        if @.data.first ~~ Pair {
+            die "index not permitted if data is Array of Pairs" if %.index;
 
-            $!data = gather {
-                for |$!data -> $p {
+            @.data = gather {
+                for @.data -> $p {
                     take $p.value;
-                    $!index.push: $p;
+                    %.index.push: $p;
                 }
             }.Array
 
-        # make index into Array of Pairs (index => data element)
+        # make index Hash (index => pos)
         } else {
-            die "index.elems != data.elems" if ( $!index && $!index.elems != $!data.elems );
+            die "index.elems != data.elems" if ( %.index && %.index.elems != @.data.elems );
 
-            $!index = gather {
+            if %.index {
+
+            } else {
                 my $i = 0;
-                for |$!data -> $d {
-                    take ( ( $!index ?? $!index[$i++] !! $i++ ) => $d )
-                }
-            }.Array
+                %.index{~$i} = $i++ for ^@.data
+            }
         }
 
         # auto set dtype if not set from args
         if $.dtype eq 'Any' {       #can't use !~~ Any since always False
 
             my %dtypes = (); 
-            for |$!data -> $d {
+            for @.data -> $d {
                 %dtypes{$d.^name} = 1;
             }
 
@@ -191,70 +207,86 @@ class Series does Positional does Iterable is export {
                 when 'Bool' { $!dtype = Bool }
             }
         }
+    }
 
+    ### Outputs ###
+    method str-attrs {
+        %( :$.name, dtypes => $!dtype.^name,)
+    }
+}
+
+
+#`[[[
+
+    method TWEAK {
+        # make index from input Hash
+        if @.data.first ~~ Pair {
+            die "index not permitted if data is Array of Pairs" if %.index;
+
+            @.data = gather {
+                for @.data -> $p {
+                    take $p.value;
+                    %.index.push: $p;
+                }
+            }.Array
+
+        # make index Hash (index => pos)
+        } else {
+            die "index.elems != data.elems" if ( %.index && %.index.elems != @.data.elems );
+
+            say "yo";
+            say @.data;
+            say %.index;
+
+            for ^|@.data {
+                say $++
+                ##%.index ?? %.index$i++] !! $i++ ) => $d )
+            }
+
+            %.index = gather {
+                my $i = 0;
+                for @.data -> $d {
+                    take ( ( %.index ?? %.index[$i++] !! $i++ ) => $d )
+                }
+            }.Array
+        }
+
+        # auto set dtype if not set from args
+        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
+
+            my %dtypes = (); 
+            for @.data -> $d {
+                %dtypes{$d.^name} = 1;
+            }
+
+            given %dtypes.keys.any {
+                # if any are Str/Date, then whole Series must be
+                when 'Str'  { 
+                    $!dtype = Str;
+                    die "Cannot mix other dtypes with Str!" unless %dtypes.keys.all ~~ 'Str'
+                }
+                when 'Date' { 
+                    $!dtype = Date;
+                    die "Cannot mix other dtypes with Date!" unless %dtypes.keys.all ~~ 'Date'
+                }
+
+                # Real types are handled in descending sequence
+                when 'Num'  { $!dtype = Num }
+                when 'Rat'  { $!dtype = Rat }
+                when 'Int'  { $!dtype = Int }
+                when 'Bool' { $!dtype = Bool }
+            }
+        }
     }
 
     ### Outputs ###
 
     method Str {
         my $attr-str = gather {
-            take "name: " ~$!name if $!name;
+            take "name: " ~$.name if $.name;
             take "dtype: " ~$!dtype.^name if $!dtype.^name !~~ 'Any';
         }.join(', ');
-        $!index.join("\n") ~ "\n" ~ $attr-str;
-    }
-
-    ### Role Support ###
-
-    # Positional role support 
-    # viz. https://docs.raku.org/type/Positional
-
-    method of {
-        $!dtype 
-    }
-    method elems {
-        $!data.elems
-    }
-    method AT-POS( $p ) {
-        $!data[$p]
-    }
-    method EXISTS-POS( $p ) {
-        0 <= $p < $!data.elems ?? True !! False
-    }
-
-    # LIMITED Associative role support 
-    # viz. https://docs.raku.org/type/Associative
-    # Series just implements the Assoc. methods, but does not do the Assoc. role
-    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
-
-    method keyof {
-        Str(Any) 
-    }
-    method AT-KEY( $k ) {
-        for |$!index -> $p {
-            return $p.value if $p.key ~~ $k
-        }
-    }
-    method EXISTS-KEY( $k ) {
-        for |$!index -> $p {
-            return True if $p.key ~~ $k
-        }
-    }
-
-    # Iterable role support 
-    # viz. https://docs.raku.org/type/Iterable
-
-    method iterator {
-        $!data.iterator
-    }
-    method flat {
-        $!data.flat
-    }
-    method lazy {
-        $!data.lazy
-    }
-    method hyper {
-        $!data.hyper
+        %.index.join("\n") ~ "\n" ~ $attr-str;
     }
 }
 
@@ -551,5 +583,5 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export
     DataFrame.series( @series, index => |@series.first.index.map(*.key) );
 }
 
-
+#]]]
 #EOF
