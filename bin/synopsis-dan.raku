@@ -11,6 +11,7 @@ use Dan;
 
 # used for the row (or column) of a DataFrame
 
+#`[
 my $ds = DataSlice.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
 dd $ds;
 say $ds.index;
@@ -24,13 +25,13 @@ say $ds[*];
 say $ds{'b'};
 say $ds<b d>;
 say "=============================================";
-
+#]
 
 ### Series ###
 
 my \s = $;    
 
-#[
+#`[
 #s = pd.Series([1, 3, 5, np.nan, 6, 8])
 #s = Series.new([1, 3, 5, NaN, 6, 8]);                                   
 s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
@@ -43,11 +44,11 @@ say ~s; say "=============================================";
 #s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
 s = Series.new([rand xx 5], index => <a b c d e>);
 
+say s.index;
 say ~s; say "=============================================";
 
 #`[
 #s = pd.Series({"b": 1, "a": 0, "c": 2})
-#]
 
 #canonical form is (ordered) Array of Pairs
 s = Series.new([b=>1, a=>0, c=>2]);
@@ -64,17 +65,14 @@ s = Series.new(5e0, index => <a b c d e>);
 say ~s; say "=============================================";
 
 say s[1];
-#say s{2};
 say s{"c"};
 say s<c>;
 say s.data;
 say s.index.sort(*.value).map(*.key);
 say s.of;
 say s.dtype;
+#]
 
-die;
-
-#`[[[
 ### Datatypes ###
 
 #`[
@@ -108,6 +106,7 @@ The general approach is:
 So, functions are:
 - Dan ... dtype is a courtesy attr, does nothing
 #]
+
 #`[
 ### Operations ###
 
@@ -121,7 +120,7 @@ say s.map(*+2);
 say [+] s;
 
 # Hyper
-#dd s.hyper;
+dd s.hyper;
 say s >>+>> 2;
 say s >>+<< s;
 my \t = s; say ~t;
@@ -145,6 +144,8 @@ my \df = DataFrame.new( [[rand xx 6] xx 4], index => dates, columns => <A B C D>
 
 say ~df; say "=============================================";
 
+die;
+#`[[[
 #`[
 df2 = pd.DataFrame(
    ...:     {

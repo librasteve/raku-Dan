@@ -173,9 +173,7 @@ class Series does DataSlice is export {
         } else {
             die "index.elems != data.elems" if ( %.index && %.index.elems != @.data.elems );
 
-            if %.index {
-
-            } else {
+            if ! %.index {
                 my $i = 0;
                 %.index{~$i} = $i++ for ^@.data
             }
@@ -211,82 +209,7 @@ class Series does DataSlice is export {
 
     ### Outputs ###
     method str-attrs {
-        %( :$.name, dtypes => $!dtype.^name,)
-    }
-}
-
-
-#`[[[
-
-    method TWEAK {
-        # make index from input Hash
-        if @.data.first ~~ Pair {
-            die "index not permitted if data is Array of Pairs" if %.index;
-
-            @.data = gather {
-                for @.data -> $p {
-                    take $p.value;
-                    %.index.push: $p;
-                }
-            }.Array
-
-        # make index Hash (index => pos)
-        } else {
-            die "index.elems != data.elems" if ( %.index && %.index.elems != @.data.elems );
-
-            say "yo";
-            say @.data;
-            say %.index;
-
-            for ^|@.data {
-                say $++
-                ##%.index ?? %.index$i++] !! $i++ ) => $d )
-            }
-
-            %.index = gather {
-                my $i = 0;
-                for @.data -> $d {
-                    take ( ( %.index ?? %.index[$i++] !! $i++ ) => $d )
-                }
-            }.Array
-        }
-
-        # auto set dtype if not set from args
-        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
-
-            my %dtypes = (); 
-            for @.data -> $d {
-                %dtypes{$d.^name} = 1;
-            }
-
-            given %dtypes.keys.any {
-                # if any are Str/Date, then whole Series must be
-                when 'Str'  { 
-                    $!dtype = Str;
-                    die "Cannot mix other dtypes with Str!" unless %dtypes.keys.all ~~ 'Str'
-                }
-                when 'Date' { 
-                    $!dtype = Date;
-                    die "Cannot mix other dtypes with Date!" unless %dtypes.keys.all ~~ 'Date'
-                }
-
-                # Real types are handled in descending sequence
-                when 'Num'  { $!dtype = Num }
-                when 'Rat'  { $!dtype = Rat }
-                when 'Int'  { $!dtype = Int }
-                when 'Bool' { $!dtype = Bool }
-            }
-        }
-    }
-
-    ### Outputs ###
-
-    method Str {
-        my $attr-str = gather {
-            take "name: " ~$.name if $.name;
-            take "dtype: " ~$!dtype.^name if $!dtype.^name !~~ 'Any';
-        }.join(', ');
-        %.index.join("\n") ~ "\n" ~ $attr-str;
+        %( :$.name, dtype => $!dtype.^name,)
     }
 }
 
@@ -297,6 +220,8 @@ class Categorical is Series is export {
     }
 }
 
+
+#`[[[
 class DataFrame does Positional does Iterable is export {
     has Array       $.series is required;     #Array of Series
     has Array(List) $.columns;                #Array of Pairs (column label => Series)
@@ -556,7 +481,9 @@ class DataFrame does Positional does Iterable is export {
     }
 #]
 }
+#]]]
 
+#`[[   hopefully no need for pcf s
 ### Postcircumfix overrides to handle slices
 multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer where Range|List ) is export {
     my @columns = [];
@@ -582,6 +509,6 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export
 
     DataFrame.series( @series, index => |@series.first.index.map(*.key) );
 }
+#]]
 
-#]]]
 #EOF
