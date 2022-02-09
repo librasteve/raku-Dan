@@ -32,7 +32,16 @@ df2.B                  df2.duplicated
 #]
 
 my $db = 0;               #debug
+
+# helper declarations & functions
+
 my @alpha3 = 'A'..'ZZZ';
+
+# sort Hash by value, return keys
+# poor man's Ordered Hash
+sub sbv( %h --> Seq ) {
+    %h.sort(*.value).map(*.key)
+}
 
 role DataSlice does Positional does Iterable is export {
     has Str     $.name is rw = 'anon';
@@ -54,7 +63,7 @@ role DataSlice does Positional does Iterable is export {
 
     method Str {
         my $data-str = gather {
-            for %!index.sort(*.values).map(*.key) -> $k {
+            for %!index.&sbv -> $k {
                 take $k => @!data[%!index{$k}]
             }
         }.join("\n");
@@ -220,124 +229,161 @@ class Categorical is Series is export {
     }
 }
 
+role DataFrame does Positional does Iterable is export {
+    has Str         $.name is rw = 'anon';
+    has Any         @.data = [];        #redo 2d shaped Array when [; ] implemented
+    has Int         %.index;            #row index
+    has Int         %.columns;          #column index
+    has Str         @.dtypes;
+    has DataSlice   @.row-cache = [];
 
-#`[[[
-class DataFrame does Positional does Iterable is export {
-    has Array       $.series is required;     #Array of Series
-    has Array(List) $.columns;                #Array of Pairs (column label => Series)
-    has Array(List) $.index;                  #Array (of row headers)
+    ### Contructors ###
 
-    # Positional series arg => redispatch as Named
-    multi method new( $series, *%h ) {
-        samewith( :$series, |%h )
+    # Positional data array arg => redispatch as Named
+    multi method new( @data, *%h ) {
+        samewith( :@data, |%h )
     }
 
-    # helper methods
-    method  row-elems {
-        my $row-elems = 0;
-        for |$!series {
-            when Pair { $row-elems max= .value.elems } 
-            default   { $row-elems max= .elems }
+    # accept index as List, make Hash
+    multi method new( List:D :$index, *%h ) {
+        samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
+    }
+
+    # accept columns as List, make Hash
+    multi method new( List:D :$columns, *%h ) {
+        samewith( columns => $columns.map({ $_ => $++ }).Hash, |%h )
+    }
+
+    # helper functions
+
+    method load-from-series( @series, $rows ) {
+        loop ( my $j=0; $j < $rows; $j++ ) {
+            loop ( my $i=0; $i < @series; $i++ ) {
+                @!data[$j;$i] = @series[$i][$j]                             #TODO := with BIND-POS
+            }
         }
-        $row-elems
     }
 
     method TWEAK {
-        # series arg is Array of Pairs (no index)
-        if $!series.first ~~ Pair {
-            die "columns / index not permitted if data is Array of Pairs" if $!index || $!columns;
+        # data arg is 1d Array of Pairs (label => Series)
+        if @!data.first ~~ Pair {
+            die "columns / index not permitted if data is Array of Pairs" if %!index || %!columns;
 
-            my @labels = $!series.map(*.key);
-            my $index = [0..^$.row-elems];
+            my $row-count = 0;
+            @!data.map( $row-count max= *.value.elems );
 
-            # make series a plain Array of Series elems 
-            # make or update each Series with col key as name, index as index
-            $!series = gather {
-                # iterate series argument
-                for |$!series -> $p {
+            my @index  = 0..^$row-count;
+            my @labels = @!data.map(*.key);
+
+            # make (or update) each Series with column key as name, index as index
+            my @series = gather {
+                for @!data -> $p {
                     my $name = ~$p.key;
                     given $p.value {
-                        #FIXME may be more efficient to keep when Series and reset name/index
-                        #ie. new Series index setter method => 
-                        #when Series { take $_; $_.name = ~$p.key, $_.index: $!index }
-
-                        # handle Series/Array with row-elems
+                        # handle Series/Array with row-elems (auto index)   #TODO: avoid Series.new
                         when Series { take Series.new( $_.data, :$name ) }
                         when Array  { take Series.new( $_, :$name ) }
 
-                        # handle Scalar item (set index to expand)
-                        when Str    { take Series.new( $_, :$name, :$index ) }
-                        when Real   { take Series.new( $_, :$name, :$index ) }
-                        when Date   { take Series.new( $_, :$name, :$index ) }
+                        # handle Scalar items (set index to auto-expand)    #TODO: lazy expansion
+                        when Str|Real|Date { take Series.new( $_, :$name, :@index ) }
                     }
                 }
             }.Array;
 
-            # make columns into Array of Pairs (column label => Series) 
+            # clear and load data
+            @!data = [];
+            $.load-from-series: @series, +@index;
+
+            # make index Hash (row label => pos) 
+            my $j = 0;
+            %!index{~$j} = $j++ for ^@index;
+
+            # make columns Hash (col label => pos) 
             my $i = 0;
-            for |$!series -> $s {
-                $!columns.push: @labels[$i++] => $s
+            %!columns{@labels[$i]} = $i++ for ^@labels;
+        } 
+
+        else {
+            die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
+
+            if ! %!index {
+                [0..^@!data.elems].map( {%!index{$_.Str} = $_} )
             }
 
-        } else {
-            my @labels = gather {
-                for ^$!series.first.elems -> $i {
-                    take ( $!columns ?? $!columns[$i] !! @alpha3[$i] )
-                }
+            if ! %!columns {
+                @alpha3[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
             }
 
-            # set up index attr
-            my $index = $!index ?? $!index !! [0..^$.row-elems];
+            # data arg is 1d Array of Series (cols)                         #TODO: testme
+            if @!data.first ~~ Series {
 
-            # series arg is 2d Array => make into Array of Series 
-            if $!series.first ~~ Array {
-                die "columns.elems != series.elems" if ( $!columns && $!columns.elems != $!series.elems );
+                my @series = @!data; 
 
-                # make Series from 2d Array columns
-                $!series = gather {
-                    for $!series[*;] -> $d {
-                        my $name = @labels.shift;
-                        take Series.new( $d, :$name, :$index )
-                    }
-                }.Array
-
-            } else {
-
-                # make Series from Array of Series 
-                $!series = gather {
-                    for |$!series -> $s {
-                        my $name = @labels.shift;
-                        take Series.new( $s.data, :$name, :$index )
-                    }
-                }.Array
-
+                # clear and load data
+                @!data = [];
+                $.load-from-series: @series, +%!index;
             }
 
-            # make columns into Array of Pairs (alpha3 => Series)
-            $!columns = gather {
-                my $i = 0;
-                for |$!series -> $s {
-                    take ( ( $!columns ?? $!columns[$i++] !! @alpha3[$i++] ) => $s )
-                }
-            }.Array
-        }
+            # data arg is 2d Array (already) 
+            else {
+                #no-op
+            } 
 
-        if $!index {
-            die "index.elems != row-elems" if ( $!index && $!index.elems != $.row-elems );
-
-        } else {
-            $!index = [0..^$.row-elems];
         }
     }
 
-    ### Getter & Output Methods ###
+    ### Output methods ###
 
+#`[ #iamerejh
     method dtypes {
         gather {
             for |$!columns -> $p {
                 take $p.key ~ ' => ' ~ $p.value.dtype;
             } }.join("\n")
     }
+#]
+
+    method Str {
+        # i is inner,       j is outer
+        # i is cols across, j is rows down
+        # i0 is index col , j0 is row header
+
+        # headers
+        my @row-hdrs = %!index.&sbv;
+        my @col-hdrs = %!columns.&sbv;
+           @col-hdrs.unshift: '';
+
+        # rows (incl. row headers)
+        my @out-rows = @!data.deepmap( * ~~ Date ?? *.Str !! * );
+           @out-rows.map( *.unshift: @row-hdrs.shift );
+
+        # set table options 
+        my %options = %(
+            rows => {
+                column_separator     => '',
+                corner_marker        => '',
+                bottom_border        => '',
+            },
+            headers => {
+                top_border           => '',
+                column_separator     => '',
+                corner_marker        => '',
+                bottom_border        => '',
+            },
+            footers => {
+                column_separator     => '',
+                corner_marker        => '',
+                bottom_border        => '',
+            },
+        );
+
+        my @table = lol2table(@col-hdrs, @out-rows, |%options);
+        @table.join("\n")
+    }
+
+}
+
+#`[[[
 
     method Str {
         # i is inner,       j is outer
