@@ -491,37 +491,55 @@ multi postfix:<^>( DataSlice $ds ) is export {
     DataFrame.new(($ds,)) 
 }
 
-### Postcircumfix overrides first subscript [i] to make DataSlices (rows)
+### Override first subscript [i] to make DataSlices (rows)
 
 #| single DataSlice can then be [j] subscripted directly to value 
 multi postcircumfix:<[ ]>( DataFrame:D $df, Int $p ) is export {
     DataSlice.new( data => $df.data[$p;*], index => $df.columns, name => $df.index.&sbv[$p] )
 }
 
-#| slices make Array of DataSlice objects
-multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export {
-    my DataSlice @aods =
-    @s.map({
+# helper
+sub make-aods( $df, @s ) {
+    my DataSlice @ = @s.map({
         DataSlice.new( data => $df.data[$_;*], index => $df.columns, name => $df.index.&sbv[$_] )
-    })
-}
-multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export {
-    my @s = $p( $df.elems );
-    my DataSlice @aods =
-    @s.map({
-        DataSlice.new( data => $df.data[$_;*], index => $df.columns, name => $df.index.&sbv[$_] )
-    })
-}
-multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export {
-    my DataSlice @aods =
-    $df.data.map({
-        DataSlice.new( data => |$_, index => $df.columns, name => $df.index.&sbv[$++] )
     })
 }
 
-multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
-    say "yo"
+#| slices make Array of DataSlice objects
+multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export {
+    make-aods( $df, @s )
 }
+multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export {
+    make-aods( $df, $p($df.elems) )
+}
+multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export {
+    make-aods( $df, 0..^$df.elems )
+}
+
+
+### Override second subscript [j] to make DataFrame
+
+# helper
+sub sliced-slices( @aods, @s ) {
+    gather {
+        @aods.map({ take DataSlice.new( data => $_[@s], index => $_.index.&sbv[@s], name => $_.name )}) 
+    }   
+}
+
+#| make DataFrame from sliced DataSlices 
+multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
+    DataFrame.new( sliced-slices(@aods, ($p,)) )
+}
+multi postcircumfix:<[ ]>( DataSlice @aods , @s where Range|List ) is export {
+    DataFrame.new( sliced-slices(@aods, @s) )
+}
+multi postcircumfix:<[ ]>( DataSlice @aods, WhateverCode $p ) is export {
+    DataFrame.new( sliced-slices(@aods, $p(@aods.first.elems)) )
+}
+multi postcircumfix:<[ ]>( DataSlice @aods, Whatever ) is export {
+    DataFrame.new( sliced-slices(@aods, 0..^@aods.first.elems) )
+}
+
 
 #`[[
 multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export {
