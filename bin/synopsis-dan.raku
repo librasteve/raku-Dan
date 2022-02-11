@@ -185,7 +185,7 @@ say ~df[0..1][*];
 say "=============================================";
 #]
 
-#[[[
+#`[
 # Associative Access
 say dates[0..1];
 say ~df{dates[0]}; 
@@ -194,10 +194,10 @@ say ~df{dates[0]}{'C'};
 say ~df{dates[0]}<D>; 
 say ~df{dates[0..1]}<A>; 
 say ~df[*]<A C>;
+say ~df.series: <C>;
 say "=============================================";
-#]]]
+#]
 
-#`[[[
 #`[
 df2 = pd.DataFrame(
    ...:     {
@@ -220,6 +220,7 @@ my \df2 = DataFrame.new([
         F => "foo",
 ]);
 
+#[
 say ~df2; 
 say "---------------------------------------------";
 
@@ -228,8 +229,8 @@ say df2.index;
 say df2.columns;
 say "=============================================";
 say df2.dtypes;
-#]]]
-
+#]
+die;
 
 #`[
 ### DataFrame Operations ###
@@ -240,14 +241,18 @@ say df[1].map(*+3);
 say df[1][1,2].map(*+3);
 say [+] df[1;*];
 say [+] df[*;1];
-say [+] df[*;*];
+say [+] df[*;*];   #wow
+say [Z] @ = df;    #wow
+say [Z] df.data;   #wow
+say ~df.T;
+say ~DataFrame.new( data => ([Z] df.data), index => df.columns, columns => df.index );
+#]
 
 # Hyper
 dd df.hyper;
 say df >>+>> 2;
 say df >>+<< df;
 my \dg = df; say ~dg;
-#]
 
 #`[
 Notes:

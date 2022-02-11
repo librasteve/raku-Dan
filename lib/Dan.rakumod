@@ -10,14 +10,14 @@ Todos
 - map
 - pipe
 - hyper
+- operators
+- df.T (transpose)
+- df.series
 ^^^ done
 - df.dtypes (dynamic)
 - META6.json with deps
 - df.describe
-- df.T (transpose)
 - df.sort
-- coerce to dtype (on new or get value?)
-- operators
 
 df2.A                  df2.bool
 df2.abs                df2.boxplot
@@ -39,8 +39,7 @@ my $db = 0;               #debug
 
 my @alpha3 = 'A'..'ZZZ';
 
-# sort Hash by value, return keys
-# poor man's Ordered Hash
+# sort Hash by value, return keys (poor woman's Ordered Hash)
 sub sbv( %h --> Seq ) {
     %h.sort(*.value).map(*.key)
 }
@@ -355,12 +354,20 @@ role DataFrame does Positional does Iterable is export {
 
     ### Output methods ###
 
+    method T {
+        DataFrame.new( data => ([Z] @.data), index => %.columns, columns => %.index )
+    }
+
     method dtypes {                                                         #TODO: dynamic with new Series
         gather {
             for %!columns.&sbv -> $k {
                 take $k ~ ' => ' ~ @!dtypes[$++]
             }
         }.join("\n")
+    }
+
+    method series( $k ) {
+        self.[*]{$k}
     }
         
     method Str {
@@ -375,7 +382,10 @@ role DataFrame does Positional does Iterable is export {
 
         # rows (incl. row headers)
         my @out-rows = @!data.deepmap( * ~~ Date ?? *.Str !! * );
-           @out-rows.map( *.unshift: @row-hdrs.shift );
+           @out-rows.map({ 
+                $_ .= Array; 
+                $_.unshift: @row-hdrs.shift
+            });
 
         # set table options 
         my %options = %(
@@ -490,7 +500,7 @@ multi postfix:<^>( DataSlice $ds ) is export {
 
 ### Override first subscript [i] to make DataSlices (rows)
 
-#| single DataSlice can then be [j] subscripted directly to value 
+#| provides single DataSlice which can be [j] subscripted directly to value 
 multi postcircumfix:<[ ]>( DataFrame:D $df, Int $p ) is export {
     DataSlice.new( data => $df.data[$p;*], index => $df.columns, name => $df.index.&sbv[$p] )
 }
@@ -522,11 +532,20 @@ sub sliced-slices( @aods, @s ) {
         @aods.map({ take DataSlice.new( data => $_[@s], index => $_.index.&sbv[@s], name => $_.name )}) 
     }   
 }
+sub make-series( @sls ) {
+    my @data = @sls.map({ $_.data[0] });
+    my @index = @sls.map({ $_.name[0] });
+    my $name = @sls.first.index.&sbv[0];
+
+    Series.new( :@data, :@index, :$name )
+}
+
+#| provides single Series which can be [j] subscripted directly to value 
+multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
+    make-series( sliced-slices(@aods, ($p,)) )
+}
 
 #| make DataFrame from sliced DataSlices 
-multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
-    DataFrame.new( sliced-slices(@aods, ($p,)) )
-}
 multi postcircumfix:<[ ]>( DataSlice @aods , @s where Range|List ) is export {
     DataFrame.new( sliced-slices(@aods, @s) )
 }
@@ -550,7 +569,7 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export {
 
 multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export {
     my $p = @aods.first.index{$k};
-    DataFrame.new( sliced-slices(@aods, ($p,)) )
+    make-series( sliced-slices(@aods, ($p,)) )
 }
 multi postcircumfix:<{ }>( DataSlice @aods , @ks ) is export {
     my @s = @aods.first.index{@ks};
