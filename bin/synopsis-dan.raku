@@ -108,7 +108,7 @@ So, functions are:
 #]
 
 #`[
-### Operations ###
+### Series Operations ###
 
 # Array Index Slices
 say s[*-1];
@@ -178,14 +178,14 @@ say ~df[0..1]^;
 say ~df[*][1];
 say ~df[0..1][1];
 say ~df[0..*-2][1];
-#]
 say ~df[0..1][0];
 say ~df[0..1][1,2];
 say ~df[0..*-2][1..*-1];
 say ~df[0..1][*];
+say "=============================================";
+#]
 
 #`[[[
-say "=============================================";
 # Associative Access
 #say dates[0];
 say ~df{dates[0]}; 
@@ -226,6 +226,23 @@ say "=============================================";
 say df2.dtypes;
 #]]]
 
+
+#`[
+### DataFrame Operations ###
+
+# Math
+say df.map(*.map(*+2));
+say df[1].map(*+3);
+say df[1][1,2].map(*+3);
+say [+] df[1;*];
+say [+] df[*;1];
+
+# Hyper
+dd df.hyper;
+say df >>+>> 2;
+say df >>+<< df;
+my \dg = df; say ~dg;
+#]
 
 #`[
 Notes:

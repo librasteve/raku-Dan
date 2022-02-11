@@ -9,14 +9,15 @@ Todos
 - dtype (manual/auto)
 - map
 - pipe
-- operators
 - hyper
+^^^ done
+- df.dtypes (dynamic)
 - META6.json with deps
 - df.describe
 - df.T (transpose)
 - df.sort
 - coerce to dtype (on new or get value?)
-- demote Array to List (still does pos and iter)
+- operators
 
 df2.A                  df2.bool
 df2.abs                df2.boxplot
@@ -96,21 +97,6 @@ role DataSlice does Positional does Iterable is export {
         0 <= $p < @!data.elems ?? True !! False
     }
 
-    # LIMITED Associative role support 
-    # viz. https://docs.raku.org/type/Associative
-    # DataSlice just implements the Assoc. methods, but does not do the Assoc. role
-    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
-
-    method keyof {
-        Str(Any) 
-    }
-    method AT-KEY( $k ) {
-        @!data[%.index{$k}]
-    }
-    method EXISTS-KEY( $k ) {
-        %.index{$k}:exists
-    }
-
     # Iterable role support 
     # viz. https://docs.raku.org/type/Iterable
 
@@ -125,6 +111,21 @@ role DataSlice does Positional does Iterable is export {
     }
     method hyper {
         @!data.hyper
+    }
+
+    # LIMITED Associative role support 
+    # viz. https://docs.raku.org/type/Associative
+    # DataSlice just implements the Assoc. methods, but does not do the Assoc. role
+    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
+
+    method keyof {
+        Str(Any) 
+    }
+    method AT-KEY( $k ) {
+        @!data[%.index{$k}]
+    }
+    method EXISTS-KEY( $k ) {
+        %.index{$k}:exists
     }
 }
 
@@ -420,7 +421,21 @@ role DataFrame does Positional does Iterable is export {
         0 <= $p < @!data.elems ?? True !! False
     }
 
-}
+    # Iterable role support 
+    # viz. https://docs.raku.org/type/Iterable
+
+    method iterator {
+        @!data.iterator
+    }
+    method flat {
+        @!data.flat
+    }
+    method lazy {
+        @!data.lazy
+    }
+    method hyper {
+        @!data.hyper
+    }
 
 #`[[[
 
@@ -457,31 +472,13 @@ role DataFrame does Positional does Iterable is export {
 
         #Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
     }
-#`[
     method EXISTS-KEY( $k ) {
         for |$!columns -> $p {
             return True if $p.key ~~ $k
         }
     }
-
-    # Iterable role support 
-    # viz. https://docs.raku.org/type/Iterable
-
-    method iterator {
-        $!data.iterator
-    }
-    method flat {
-        $!data.flat
-    }
-    method lazy {
-        $!data.lazy
-    }
-    method hyper {
-        $!data.hyper
-    }
-#]
-}
 #]]]
+}
 
 ### Postfix '^' as explicit subscript chain terminator
 multi postfix:<^>( DataSlice @ds ) is export {
