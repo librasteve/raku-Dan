@@ -537,46 +537,25 @@ multi postcircumfix:<[ ]>( DataSlice @aods, Whatever ) is export {
     DataFrame.new( sliced-slices(@aods, 0..^@aods.first.elems) )
 }
 
+### Override first assoc subscript {i}
 
-#`[[
-multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export {
-    my @series = gather {
-        for @slicer -> $p {    
-        die "yo";
-        #iamerejh
-            take $df.AT-KEY-N($p) 
-        }
-    }.Array;
-
-    DataFrame.series( @series, index => |@series.first.index.map(*.key) );
+multi postcircumfix:<{ }>( DataFrame:D $df, $k ) is export {
+    $df[$df.index{$k}]
 }
-#]]
+multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export {
+    $df[$df.index{@ks}]
+}
+
+### Override second subscript [j] to make DataFrame
+
+multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export {
+    my $p = @aods.first.index{$k};
+    DataFrame.new( sliced-slices(@aods, ($p,)) )
+}
+multi postcircumfix:<{ }>( DataSlice @aods , @ks ) is export {
+    my @s = @aods.first.index{@ks};
+    DataFrame.new( sliced-slices(@aods, @s) )
+}
 
 #EOF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

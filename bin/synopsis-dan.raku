@@ -185,12 +185,16 @@ say ~df[0..1][*];
 say "=============================================";
 #]
 
-#`[[[
+#[[[
 # Associative Access
-#say dates[0];
+say dates[0..1];
 say ~df{dates[0]}; 
-#say ~df<A C>;
-say ~df; say "=============================================";
+say ~df{dates[0..1]}^; 
+say ~df{dates[0]}{'C'}; 
+say ~df{dates[0]}<D>; 
+say ~df{dates[0..1]}<A>; 
+say ~df[*]<A C>;
+say "=============================================";
 #]]]
 
 #`[[[
@@ -236,6 +240,7 @@ say df[1].map(*+3);
 say df[1][1,2].map(*+3);
 say [+] df[1;*];
 say [+] df[*;1];
+say [+] df[*;*];
 
 # Hyper
 dd df.hyper;
