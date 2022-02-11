@@ -147,19 +147,39 @@ my \df = DataFrame.new( [[rand xx 4] xx 6], index => dates, columns => <A B C D>
 say ~df;
 say "---------------------------------------------";
 
-say df.data;
+#say df.data;
 say df.index;
 say df.columns;
 say "=============================================";
 
-#`[[[
+#`[
 # Positional Access
 say df.elems;
+say ~df[0;1];
+say ~df[*;1];
+say ~df[0;*];
 say ~df[2];
-say ~df[0..1];
 say ~df[0,3];
-##say ~df[0;1];
+say ~df[0..1];
+say ~df[*];
+say ~df[0][1];
+say ~df[*][1];
+say ~df[0][*];
+say ~df[0..1];
+say ~df[0..*-3];
+say ~df[0..*-3][1];
+say ~df[0..*-3][0..*-2];
+say df[0..1];
+say df[0..1].^name;
+say ~df[0..1][1];
+say ~df[0..1][*];
+say ~df[0]^;
+say ~df[0..1]^;
+#]
+dd df[0..1];
+say df[*][1];
 
+#`[[[
 say "=============================================";
 # Associative Access
 #say dates[0];
@@ -168,7 +188,7 @@ say ~df{dates[0]};
 say ~df; say "=============================================";
 #]]]
 
-#[[[
+#`[[[
 #`[
 df2 = pd.DataFrame(
    ...:     {

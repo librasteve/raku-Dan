@@ -16,6 +16,7 @@ Todos
 - df.T (transpose)
 - df.sort
 - coerce to dtype (on new or get value?)
+- demote Array to List (still does pos and iter)
 
 df2.A                  df2.bool
 df2.abs                df2.boxplot
@@ -74,7 +75,7 @@ role DataSlice does Positional does Iterable is export {
             }
         }.join(', ');
 
-        $data-str ~ "\n" ~ $attr-str
+        $data-str ~ "\n" ~ $attr-str ~ "\n"
     }
 
     ### Role Support ###
@@ -235,7 +236,6 @@ role DataFrame does Positional does Iterable is export {
     has Int         %.index;            #row index
     has Int         %.columns;          #column index
     has Str         @.dtypes;
-    has DataSlice   @.row-cache = [];
 
     ### Contructors ###
 
@@ -256,11 +256,18 @@ role DataFrame does Positional does Iterable is export {
 
     # helper functions
 
-    method load-from-series( @series, $rows ) {
-        loop ( my $j=0; $j < $rows; $j++ ) {
-            loop ( my $i=0; $i < @series; $i++ ) {
+    method load-from-series( @series, $row-count ) {
+        loop ( my $i=0; $i < @series; $i++ ) {
+            loop ( my $j=0; $j < $row-count; $j++ ) {
                 @!data[$j;$i] = @series[$i][$j]                             #TODO := with BIND-POS
             }
+        }
+    }
+
+    method load-from-slices( @slices ) {
+        loop ( my $i=0; $i < @slices; $i++ ) {
+            %.index{@slices[$i].name} = $i;
+            @!data[$i] := @slices[$i].data;
         }
     }
 
@@ -281,7 +288,7 @@ role DataFrame does Positional does Iterable is export {
                     my $name = ~$p.key;
                     given $p.value {
                         # handle Series/Array with row-elems (auto index)   #TODO: avoid Series.new
-                        when Series { take Series.new( $_.data, :$name ) }
+                        when Series { take Series.new( $_.data, :$name, dtype => ::($_.dtype) ) }
                         when Array  { take Series.new( $_, :$name ) }
 
                         # handle Scalar items (set index to auto-expand)    #TODO: lazy expansion
@@ -302,6 +309,19 @@ role DataFrame does Positional does Iterable is export {
             my $i = 0;
             %!columns{@labels[$i]} = $i++ for ^@labels;
         } 
+
+        # data arg is 1d Array of DataSlice (rows)
+        elsif @!data.first ~~ DataSlice {
+
+            my @slices = @!data; 
+
+            # clear and load data (and index)
+            @!data = [];
+            $.load-from-slices: @slices;
+
+            # make columns Hash
+            %.columns = @slices.first.index;
+        }
 
         else {
             die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
@@ -334,15 +354,14 @@ role DataFrame does Positional does Iterable is export {
 
     ### Output methods ###
 
-#`[ #iamerejh
-    method dtypes {
+    method dtypes {                                                         #TODO: dynamic with new Series
         gather {
-            for |$!columns -> $p {
-                take $p.key ~ ' => ' ~ $p.value.dtype;
-            } }.join("\n")
+            for %!columns.&sbv -> $k {
+                take $k ~ ' => ' ~ @!dtypes[$++]
+            }
+        }.join("\n")
     }
-#]
-
+        
     method Str {
         # i is inner,       j is outer
         # i is cols across, j is rows down
@@ -381,94 +400,29 @@ role DataFrame does Positional does Iterable is export {
         @table.join("\n")
     }
 
-}
-
-#`[[[
-
-    method Str {
-        # i is inner,       j is outer
-        # i is cols across, j is rows down
-        # i0 is index col , j0 is row header
-
-        # column headers
-        my @out-cols = $!columns.map(*.key);
-        @out-cols.unshift: '';
-
-        # rows (incl. row headers)
-        my @out-rows = gather {
-            loop ( my $j=1; $j <= $.row-elems; $j++ ) {
-                take gather {
-                    loop ( my $i=0; $i <= $!columns.elems; $i++ ) {
-                        given $j, $i {
-                            when *,0  { take ~$!index[$j-1] }
-                            when 0,*  { take ~$!columns[$i-1].key }
-                            default   { take ~$!columns[$i-1].value.data[$j-1] }
-                        }
-                    }
-                }.Array
-            }
-        }.Array;
-
-        # set table options 
-        my %options = %(
-            rows => {
-                column_separator     => '',
-                corner_marker        => '',
-                bottom_border        => '',
-            },
-            headers => {
-                top_border           => '',
-                column_separator     => '',
-                corner_marker        => '',
-                bottom_border        => '',
-            },
-            footers => {
-                column_separator     => '',
-                corner_marker        => '',
-                bottom_border        => '',
-            },
-        );
-
-        my @table = lol2table(@out-cols, @out-rows, |%options);
-        @table.join("\n")
-    }
-
-    method data {
-        # i is inner,       j is outer
-        # i is cols across, j is rows down
-        # no headers, just data elems
-
-        lazy gather {
-            loop ( my $j=0; $j < $.row-elems; $j++ ) {
-                take lazy gather {
-                    loop ( my $i=0; $i < $!columns.elems; $i++ ) {
-                        take ~$!columns[$i].value.data[$j]
-                    }
-                }.Array
-            }
-        }.Array
-    }
-
     ### Role Support ###
 
     # Positional role support 
     # viz. https://docs.raku.org/type/Positional
+    # delegates semilist [; ] value element access to @!data
+    # override list [] access anyway
 
     method of {
-        Series
+        Any
     }
     method elems {
-        $!columns.elems
+        @!data.elems
     }
-    method AT-POS( $p ) {
-    ##method AT-POS( $p, $q? ) {
-        ##$.data[$p;$q // *]
-        ##$.data[$p]
-        $!columns[$p].value;
+    method AT-POS( $p, $q? ) {
+        @!data[$p;$q // *]
     }
     method EXISTS-POS( $p ) {
-        0 <= $p < $!columns.elems ?? True !! False
+        0 <= $p < @!data.elems ?? True !! False
     }
+
+}
+
+#`[[[
 
     # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
@@ -529,21 +483,47 @@ role DataFrame does Positional does Iterable is export {
 }
 #]]]
 
-#`[[   hopefully no need for pcf s
-### Postcircumfix overrides to handle slices
-multi postcircumfix:<[ ]>( DataFrame:D $df, @slicer where Range|List ) is export {
-    my @columns = [];
-
-    my @series = gather {
-        for @slicer -> $p {    
-            @columns.push: $df.columns[$p].key;
-            take $df.columns[$p].value;
-        }
-    }.Array;
-
-    DataFrame.new( :@series, :@columns, index => |@series.first.index.map(*.key) )
+### Postfix '^' as explicit subscript chain terminator
+multi postfix:<^>( DataSlice @ds ) is export {
+    DataFrame.new(@ds) 
+}
+multi postfix:<^>( DataSlice $ds ) is export {
+    DataFrame.new(($ds,)) 
 }
 
+### Postcircumfix overrides first subscript [i] to make DataSlices (rows)
+
+#| single DataSlice can then be [j] subscripted directly to value 
+multi postcircumfix:<[ ]>( DataFrame:D $df, Int $p ) is export {
+    DataSlice.new( data => $df.data[$p;*], index => $df.columns, name => $df.index.&sbv[$p] )
+}
+
+#| slices make Array of DataSlice objects
+multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export {
+    my DataSlice @aods =
+    @s.map({
+        DataSlice.new( data => $df.data[$_;*], index => $df.columns, name => $df.index.&sbv[$_] )
+    })
+}
+multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export {
+    my @s = $p( $df.elems );
+    my DataSlice @aods =
+    @s.map({
+        DataSlice.new( data => $df.data[$_;*], index => $df.columns, name => $df.index.&sbv[$_] )
+    })
+}
+multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export {
+    my DataSlice @aods =
+    $df.data.map({
+        DataSlice.new( data => |$_, index => $df.columns, name => $df.index.&sbv[$++] )
+    })
+}
+
+multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
+    say "yo"
+}
+
+#`[[
 multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export {
     my @series = gather {
         for @slicer -> $p {    
@@ -558,3 +538,30 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @slicer where Range|List ) is export
 #]]
 
 #EOF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
