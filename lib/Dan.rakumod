@@ -13,11 +13,15 @@ Todos
 - operators
 - df.T (transpose)
 - df.series
-^^^ done
 - df.dtypes (dynamic)
-- META6.json with deps
-- df.describe
 - df.sort
+- df.grep
+^^^ done
+- df.describe
+- META6.json with deps
+
+v2 Backlog
+- keep manual Series dtype over column slicing (?)
 
 df2.A                  df2.bool
 df2.abs                df2.boxplot
@@ -40,7 +44,7 @@ my $db = 0;               #debug
 my @alpha3 = 'A'..'ZZZ';
 
 # sort Hash by value, return keys (poor woman's Ordered Hash)
-sub sbv( %h --> Seq ) {
+sub sbv( %h --> Seq ) is export {
     %h.sort(*.value).map(*.key)
 }
 
@@ -258,6 +262,7 @@ role DataFrame does Positional does Iterable is export {
 
     method load-from-series( @series, $row-count ) {
         loop ( my $i=0; $i < @series; $i++ ) {
+            @!dtypes.push: @series[$i].dtype;
             loop ( my $j=0; $j < $row-count; $j++ ) {
                 @!data[$j;$i] = @series[$i][$j]                             #TODO := with BIND-POS
             }
@@ -352,24 +357,71 @@ role DataFrame does Positional does Iterable is export {
         }
     }
 
-    ### Output methods ###
+    ### Mezzanine methods ###  (that use Accessors)
 
     method T {
         DataFrame.new( data => ([Z] @.data), index => %.columns, columns => %.index )
     }
 
-    method dtypes {                                                         #TODO: dynamic with new Series
+    method series( $k ) {
+        self.[*]{$k}
+    }
+
+    method ix {
+        %!index.&sbv
+    }
+
+    method cx {
+        %!columns.&sbv
+    }
+
+    method sort( &cruton ) {  #&custom-routine-to-use
+        my $i;
+        loop ( $i=0; $i < @!data; $i++ ) {
+            @!data[$i].push: %!index.&sbv[$i]
+        }
+
+        @!data .= sort: &cruton;
+        %!index = %();
+
+        loop ( $i=0; $i < @!data; $i++ ) {
+            %!index{@!data[$i].pop} = $i
+        }
+        self
+    }
+
+    method grep( &cruton ) {  #&custom-routine-to-use
+        my $i;
+        loop ( $i=0; $i < @!data; $i++ ) {
+            @!data[$i].push: %!index.&sbv[$i]
+        }
+
+        @!data .= grep: &cruton;
+        %!index = %();
+
+        loop ( $i=0; $i < @!data; $i++ ) {
+            %!index{@!data[$i].pop} = $i
+        }
+        self
+    }
+
+    ### Output methods ###
+
+    method dtypes {
+        my @labels = self.columns.&sbv;
+
+        if ! @!dtypes {
+            my @series = @labels.map({ self.series($_) });
+              @!dtypes = @series.map({ ~$_.dtype });
+        }
+
         gather {
-            for %!columns.&sbv -> $k {
+            for @labels -> $k {
                 take $k ~ ' => ' ~ @!dtypes[$++]
             }
         }.join("\n")
     }
 
-    method series( $k ) {
-        self.[*]{$k}
-    }
-        
     method Str {
         # i is inner,       j is outer
         # i is cols across, j is rows down
@@ -517,10 +569,12 @@ multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export {
     make-aods( $df, @s )
 }
 multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export {
-    make-aods( $df, $p($df.elems) )
+    my @s = $p( |($df.elems xx $p.arity) );
+    make-aods( $df, @s )
 }
 multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export {
-    make-aods( $df, 0..^$df.elems )
+    my @s = 0..^$df.elems; 
+    make-aods( $df, @s )
 }
 
 
@@ -533,9 +587,9 @@ sub sliced-slices( @aods, @s ) {
     }   
 }
 sub make-series( @sls ) {
-    my @data = @sls.map({ $_.data[0] });
+    my @data  = @sls.map({ $_.data[0] });
     my @index = @sls.map({ $_.name[0] });
-    my $name = @sls.first.index.&sbv[0];
+    my $name  = @sls.first.index.&sbv[0];
 
     Series.new( :@data, :@index, :$name )
 }
@@ -550,10 +604,12 @@ multi postcircumfix:<[ ]>( DataSlice @aods , @s where Range|List ) is export {
     DataFrame.new( sliced-slices(@aods, @s) )
 }
 multi postcircumfix:<[ ]>( DataSlice @aods, WhateverCode $p ) is export {
-    DataFrame.new( sliced-slices(@aods, $p(@aods.first.elems)) )
+    my @s = $p( |(@aods.first.elems xx $p.arity) );
+    DataFrame.new( sliced-slices(@aods, @s) )
 }
 multi postcircumfix:<[ ]>( DataSlice @aods, Whatever ) is export {
-    DataFrame.new( sliced-slices(@aods, 0..^@aods.first.elems) )
+    my @s = 0..^@aods.first.elems;
+    DataFrame.new( sliced-slices(@aods, @s) )
 }
 
 ### Override first assoc subscript {i}

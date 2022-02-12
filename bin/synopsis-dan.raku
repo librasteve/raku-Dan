@@ -220,17 +220,16 @@ my \df2 = DataFrame.new([
         F => "foo",
 ]);
 
-#[
+#`[
 say ~df2; 
 say "---------------------------------------------";
 
 say df2.data;
 say df2.index;
 say df2.columns;
-say "=============================================";
 say df2.dtypes;
+say "=============================================";
 #]
-die;
 
 #`[
 ### DataFrame Operations ###
@@ -246,13 +245,31 @@ say [Z] @ = df;    #wow
 say [Z] df.data;   #wow
 say ~df.T;
 say ~DataFrame.new( data => ([Z] df.data), index => df.columns, columns => df.index );
-#]
 
 # Hyper
 dd df.hyper;
 say df >>+>> 2;
 say df >>+<< df;
 my \dg = df; say ~dg;
+
+# Sort
+#viz. https://docs.raku.org/routine/sort#(List)_routine_sort
+
+say ~df.sort: { .[1] };         # sort by 2nd col (ascending)
+say ~df.sort: { .[1], .[2] };   # sort by 2nd col, then 3rd col (and so on)
+say ~df.sort: { -.[1] };        # sort by 2nd col (descending)
+say ~df.sort: { df[$++]<C> };   # sort by col C
+say ~df.sort: { df.ix[$++] };   # sort by index
+say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
+
+# Grep
+say ~df.grep( { $_[1] < 0.5 } ); # grep by 2nd column 
+say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
+#]
+
+# Head & Tail
+say ~df[0..^3]^;                # head
+say ~df[(*-3..*-1)]^;           # tail
 
 #`[
 Notes:
