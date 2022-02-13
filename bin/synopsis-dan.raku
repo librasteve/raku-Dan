@@ -231,7 +231,7 @@ say df2.dtypes;
 say "=============================================";
 #]
 
-#`[
+#[
 ### DataFrame Operations ###
 
 # Math
@@ -252,6 +252,14 @@ say df >>+>> 2;
 say df >>+<< df;
 my \dg = df; say ~dg;
 
+# Head & Tail
+say ~df[0..^3]^;                # head
+say ~df[(*-3..*-1)]^;           # tail
+
+# Describe
+say ~df[*]<A>.describe;
+say ~df.describe;
+
 # Sort
 #viz. https://docs.raku.org/routine/sort#(List)_routine_sort
 
@@ -259,22 +267,17 @@ say ~df.sort: { .[1] };         # sort by 2nd col (ascending)
 say ~df.sort: { .[1], .[2] };   # sort by 2nd col, then 3rd col (and so on)
 say ~df.sort: { -.[1] };        # sort by 2nd col (descending)
 say ~df.sort: { df[$++]<C> };   # sort by col C
-say ~df.sort: { df.ix[$++] };   # sort by index
+say ~df.sort: { df.ix[$++] };   # sort by index  (cx for cols)
 say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 
-# Grep
+# Grep MOVE TO END AS DESTRUCTIVE
 say ~df.grep( { $_[1] < 0.5 } ); # grep by 2nd column 
 say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
 #]
 
-# Head & Tail
-say ~df[0..^3]^;                # head
-say ~df[(*-3..*-1)]^;           # tail
 
 #`[
 Notes:
 - NaN is raku built in
-- Series from Hash(Array) - order is unspecified (thus canonical is List of Pairs)
--
 #]
 

@@ -20,9 +20,32 @@ Todos
 - df.describe
 - META6.json with deps
 
-v2 Backlog
+v2 Backlog 
+(much of this is test / synopsis examples / new mezzanine methods)
+- Setting data
+- Index alignment
+- Missing data
+- Duplicate labels
+- Stats
+- Apply
+- Histogramming
+- String ops
+- Merge
+- Join 
+- Group
+- SQL style ops
+- Reshaping (stacking)
+- Pivot tables
+- Time Series
+- Categoricals (Enums)
+- Plotting
+- Input/Output
+- Exceptions
+
+Issues
 - keep manual Series dtype over column slicing (?)
 
+Operations
 df2.A                  df2.bool
 df2.abs                df2.boxplot
 df2.add                df2.C
@@ -132,7 +155,7 @@ role DataSlice does Positional does Iterable is export {
     }
 }
 
-class Series does DataSlice is export {
+role Series does DataSlice is export {
     has Any:U       $.dtype;                  #ie. type object
 
     ### Constructors ###
@@ -221,6 +244,44 @@ class Series does DataSlice is export {
         }
     }
 
+    ### Mezzanine methods ###  (these use Accessors)
+
+    method count { 
+        $.elems 
+    }
+
+    method mean {
+        $.sum / $.elems 
+    }
+
+    method std {
+        sqrt ( [+] $.data.map({ $^x - $.mean }).map({ $^x ** 2 }) / ( $.elems - 1 ) )
+    }
+
+    # fivenum code adapted from https://rosettacode.org/wiki/Fivenum#Raku
+    sub fourths ( Int $end ) {
+        my $end_22 = $end div 2 / 2;
+
+        return 0, $end_22, $end/2, $end - $end_22, $end;
+    }
+
+    method fivenum {
+        my @x = self.data.sort(+*)
+            or die 'Input must have at least one element';
+
+        my @d = fourths(@x.end);
+
+        ( @x[@d».floor] Z+ @x[@d».ceiling] ) »/» 2
+    }
+
+    method describe {
+        Series.new(
+            :$.name,
+            index => <count mean std min 25% 50% 75% max>,
+            data => [$.count, $.mean, $.std, |@.fivenum],
+        )
+    }
+
     ### Outputs ###
     method str-attrs {
         %( :$.name, dtype => $!dtype.^name,)
@@ -259,10 +320,14 @@ role DataFrame does Positional does Iterable is export {
     }
 
     # helper functions
-
     method load-from-series( @series, $row-count ) {
         loop ( my $i=0; $i < @series; $i++ ) {
+
             @!dtypes.push: @series[$i].dtype;
+
+            my $key = @series[$i].name // @alpha3[$i];
+            %!columns{ $key } = $i;
+
             loop ( my $j=0; $j < $row-count; $j++ ) {
                 @!data[$j;$i] = @series[$i][$j]                             #TODO := with BIND-POS
             }
@@ -271,41 +336,99 @@ role DataFrame does Positional does Iterable is export {
 
     method load-from-slices( @slices ) {
         loop ( my $i=0; $i < @slices; $i++ ) {
-            %.index{@slices[$i].name} = $i;
-            @!data[$i] := @slices[$i].data;
+
+            my $key = @slices[$i].name // ~$i;
+            %!index{ $key } = $i;
+
+            @!data[$i] := @slices[$i].data
         }
     }
 
     method TWEAK {
-        # data arg is 1d Array of Pairs (label => Series)
-        if @!data.first ~~ Pair {
-            die "columns / index not permitted if data is Array of Pairs" if %!index || %!columns;
+        given @!data.first {
 
-            my $row-count = 0;
-            @!data.map( $row-count max= *.value.elems );
+            # data arg is 1d Array of Pairs (label => Series)
+            when Pair {
+                die "columns / index not permitted if data is Array of Pairs" if %!index || %!columns;
 
-            my @index  = 0..^$row-count;
-            my @labels = @!data.map(*.key);
+                my $row-count = 0;
+                @!data.map( $row-count max= *.value.elems );
 
-            # make (or update) each Series with column key as name, index as index
-            my @series = gather {
-                for @!data -> $p {
-                    my $name = ~$p.key;
-                    given $p.value {
-                        # handle Series/Array with row-elems (auto index)   #TODO: avoid Series.new
-                        when Series { take Series.new( $_.data, :$name, dtype => ::($_.dtype) ) }
-                        when Array  { take Series.new( $_, :$name ) }
+                my @index  = 0..^$row-count;
+                my @labels = @!data.map(*.key);
 
-                        # handle Scalar items (set index to auto-expand)    #TODO: lazy expansion
-                        when Str|Real|Date { take Series.new( $_, :$name, :@index ) }
+                # make (or update) each Series with column key as name, index as index
+                my @series = gather {
+                    for @!data -> $p {
+                        my $name = ~$p.key;
+                        given $p.value {
+                            # handle Series/Array with row-elems (auto index)   #TODO: avoid Series.new
+                            when Series { take Series.new( $_.data, :$name, dtype => ::($_.dtype) ) }
+                            when Array  { take Series.new( $_, :$name ) }
+
+                            # handle Scalar items (set index to auto-expand)    #TODO: lazy expansion
+                            when Str|Real|Date { take Series.new( $_, :$name, :@index ) }
+                        }
                     }
+                }.Array;
+
+                # clear and load data
+                @!data = [];
+                $.load-from-series: @series, +@index;
+
+                # make index Hash (row label => pos) 
+                my $j = 0;
+                %!index{~$j} = $j++ for ^@index;
+
+                # make columns Hash (col label => pos) 
+                my $i = 0;
+                %!columns{@labels[$i]} = $i++ for ^@labels;
+            } 
+
+            # data arg is 1d Array of Series (cols)
+            when Series {
+                die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
+
+                my $row-count = @!data.first.elems;
+                my @series = @!data; 
+
+                # clear and load data (and columns)
+                @!data = [];
+                $.load-from-series: @series, $row-count;
+
+                # make index Hash
+                %.index = @series.first.index;
+            }
+
+            # data arg is 1d Array of DataSlice (rows)
+            when DataSlice {
+                my @slices = @!data; 
+
+                # clear and load data (and index)
+                @!data = [];
+                $.load-from-slices: @slices;
+
+                # make columns Hash
+                %.columns = @slices.first.index;
+            }
+
+            # data arg is 2d Array (already) 
+            default {
+                die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
+
+                if ! %!index {
+                    [0..^@!data.elems].map( {%!index{$_.Str} = $_} )
                 }
-            }.Array;
+                if ! %!columns {
+                    @alpha3[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
+                }
+                #no-op
+            } 
+        }
+    }
 
-            # clear and load data
-            @!data = [];
-            $.load-from-series: @series, +@index;
 
+#`[ iamerejh
             # make index Hash (row label => pos) 
             my $j = 0;
             %!index{~$j} = $j++ for ^@index;
@@ -313,51 +436,10 @@ role DataFrame does Positional does Iterable is export {
             # make columns Hash (col label => pos) 
             my $i = 0;
             %!columns{@labels[$i]} = $i++ for ^@labels;
-        } 
+#]
 
-        # data arg is 1d Array of DataSlice (rows)
-        elsif @!data.first ~~ DataSlice {
 
-            my @slices = @!data; 
-
-            # clear and load data (and index)
-            @!data = [];
-            $.load-from-slices: @slices;
-
-            # make columns Hash
-            %.columns = @slices.first.index;
-        }
-
-        else {
-            die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
-
-            if ! %!index {
-                [0..^@!data.elems].map( {%!index{$_.Str} = $_} )
-            }
-
-            if ! %!columns {
-                @alpha3[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
-            }
-
-            # data arg is 1d Array of Series (cols)                         #TODO: testme
-            if @!data.first ~~ Series {
-
-                my @series = @!data; 
-
-                # clear and load data
-                @!data = [];
-                $.load-from-series: @series, +%!index;
-            }
-
-            # data arg is 2d Array (already) 
-            else {
-                #no-op
-            } 
-
-        }
-    }
-
-    ### Mezzanine methods ###  (that use Accessors)
+    ### Mezzanine methods ###  (these use Accessors)
 
     method T {
         DataFrame.new( data => ([Z] @.data), index => %.columns, columns => %.index )
@@ -403,6 +485,13 @@ role DataFrame does Positional does Iterable is export {
             %!index{@!data[$i].pop} = $i
         }
         self
+    }
+
+    method describe {
+        my @series = $.cx.map({ $.series: $_ });
+        my @data = @series.map({ $_.describe }); 
+
+        DataFrame.new( :@data )
     }
 
     ### Output methods ###
@@ -498,48 +587,6 @@ role DataFrame does Positional does Iterable is export {
     method hyper {
         @!data.hyper
     }
-
-#`[[[
-
-    # LIMITED Associative role support 
-    # viz. https://docs.raku.org/type/Associative
-    # DataFrame just implements the Assoc. methods, but does not do the Assoc. role
-    # ...thus very limited support for Assoc. accessors (to ensure Positional Hyper methods win)
-
-    method keyof {
-        Str(Any) 
-    }
-    method AT-KEY( $k ) {
-        my @new =gather {
-            for |$!columns -> $col {
-                my $series := $col.value;
-                for |$series.index -> $row {
-                    take $row.value if $row.key ~~ $k
-                }
-            }
-        }.Array;
-
-        Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
-    }
-
-    method AT-KEY-N( $k ) {
-        my @new =gather {
-            for |$!columns -> $col {
-                my $series := $col.value;
-                for |$series.index -> $row {
-                    take $row.value if $row.key ~~ $k
-                }
-            }
-        }.Array;
-
-        #Series.new( @new, name => ~$k, index => [$!columns.map(*.key)] )
-    }
-    method EXISTS-KEY( $k ) {
-        for |$!columns -> $p {
-            return True if $p.key ~~ $k
-        }
-    }
-#]]]
 }
 
 ### Postfix '^' as explicit subscript chain terminator
