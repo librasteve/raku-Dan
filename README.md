@@ -11,6 +11,7 @@ Dan is a common parent set of classes for the raku end of Data Analytic, Numeric
 - Dan::Paddle  - binding to Perl(5) Data Language using Inline::Perl5
 - NumRa
 - SciRa
+
 [to my knowledge none of this exists yet]
 
 The initial focus is on a minimal set of functions to cover the raku equivalent of:
