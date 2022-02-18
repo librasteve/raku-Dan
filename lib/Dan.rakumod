@@ -16,18 +16,18 @@ Todos
 - df.dtypes (dynamic)
 - df.sort
 - df.grep
-^^^ done
 - df.describe
+^^^ done
 - META6.json with deps
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
+- Apply
 - Setting data
 - Index alignment
 - Missing data
 - Duplicate labels
 - Stats
-- Apply
 - Histogramming
 - String ops
 - Merge

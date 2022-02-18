@@ -231,7 +231,7 @@ say df2.dtypes;
 say "=============================================";
 #]
 
-#[
+#`[
 ### DataFrame Operations ###
 
 # Math
@@ -267,7 +267,7 @@ say ~df.sort: { .[1] };         # sort by 2nd col (ascending)
 say ~df.sort: { .[1], .[2] };   # sort by 2nd col, then 3rd col (and so on)
 say ~df.sort: { -.[1] };        # sort by 2nd col (descending)
 say ~df.sort: { df[$++]<C> };   # sort by col C
-say ~df.sort: { df.ix[$++] };   # sort by index  (cx for cols)
+say ~df.sort: { df.ix[$++] };   # sort by index
 say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 
 # Grep MOVE TO END AS DESTRUCTIVE
