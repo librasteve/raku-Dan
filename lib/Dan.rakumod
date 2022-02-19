@@ -60,13 +60,12 @@ df2.applymap           df2.diff
 df2.B                  df2.duplicated
 #]
 
-my $db = 0;               #debug
-
 # helper declarations & functions
 
-my @alpha3 = 'A'..'ZZZ';
+#generates default column labels
+constant @alphi = 'A'..∞; 
 
-# sort Hash by value, return keys (poor woman's Ordered Hash)
+# sorts Hash by value, returns keys (poor woman's Ordered Hash)
 sub sbv( %h --> Seq ) is export {
     %h.sort(*.value).map(*.key)
 }
@@ -288,7 +287,7 @@ role Series does DataSlice is export {
     }
 }
 
-class Categorical is Series is export {
+role Categorical is Series is export {
     # Output
     method dtype {
         Str.^name
@@ -325,7 +324,7 @@ role DataFrame does Positional does Iterable is export {
 
             @!dtypes.push: @series[$i].dtype;
 
-            my $key = @series[$i].name // @alpha3[$i];
+            my $key = @series[$i].name // @alphi[$i];
             %!columns{ $key } = $i;
 
             loop ( my $j=0; $j < $row-count; $j++ ) {
@@ -420,24 +419,12 @@ role DataFrame does Positional does Iterable is export {
                     [0..^@!data.elems].map( {%!index{$_.Str} = $_} )
                 }
                 if ! %!columns {
-                    @alpha3[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
+                    @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
                 }
                 #no-op
             } 
         }
     }
-
-
-#`[ iamerejh
-            # make index Hash (row label => pos) 
-            my $j = 0;
-            %!index{~$j} = $j++ for ^@index;
-
-            # make columns Hash (col label => pos) 
-            my $i = 0;
-            %!columns{@labels[$i]} = $i++ for ^@labels;
-#]
-
 
     ### Mezzanine methods ###  (these use Accessors)
 
