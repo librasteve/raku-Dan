@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-#plan 36;
+plan 25;
 
 use Dan;
 
@@ -49,8 +49,6 @@ ok (df.sort: { df.ix.reverse.[$++] })[1][1] == 1,                               
 is ~df.grep( { .[1] < 0.5 } ), "   A  B  C  D ",                                        '.grep: {.[1] < 0.5}';
 is ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ), "   A  B  C  D ",         '.grep index (multiple)';
 
-
-#`[
 my \df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
@@ -59,10 +57,7 @@ my \df2 = DataFrame.new([
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
-ok df2.columns.elems == 6,                                                   'Array of Series';
-is df2.dtypes, "A => Rat\nB => Date\nC => Num\nD => Int\nE => Str\nF => Str",'.dtypes';
-#]
+ok df2.columns.elems == 6,                                                              '.columns';
+is df2.dtypes, "A => Rat\nB => Date\nC => Num\nD => Int\nE => Str\nF => Str",           '.dtypes';
 
-done-testing;
-
-#EOF
+#done-testing;
