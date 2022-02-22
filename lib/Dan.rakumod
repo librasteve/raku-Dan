@@ -75,7 +75,7 @@ role DataSlice does Positional does Iterable is export {
     has Any     @.data;
     has Int     %.index;
 
-    ### Contructors ###
+    ### Constructors ###
 
     # accept index as List, make Hash
     multi method new( List:D :$index, *%h ) {
@@ -244,6 +244,10 @@ role Series does DataSlice is export {
     }
 
     ### Mezzanine methods ###  (these use Accessors)
+
+    method ix {
+        %.index.&sbv
+    }
 
     method count { 
         $.elems 
