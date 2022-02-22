@@ -1,0 +1,28 @@
+{
+  "name": "Dan",
+  "description": "Top level roles for Data Analytics.",
+  "version": "0.0.1",
+  "perl": "6.d",
+  "authors": [
+    "p6steve"
+  ],
+  "auth": "zef:p6steve",
+  "depends": [
+    "Text::Table::Simple"
+  ],
+  "build-depends": [],
+  "test-depends": [],
+  "provides": {
+    "Dan": "lib/Dan.rakumod"
+  },
+  "resources": [],
+  "license": "Artistic-2.0",
+  "tags": [
+    "Data Analytics",
+    "Series",
+    "DataSlice",
+    "DataFrame"
+  ],
+  "api": "1",
+  "source-url": "git://github.com/p6steve/raku-dan.git"
+}
