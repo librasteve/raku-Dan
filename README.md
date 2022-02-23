@@ -3,19 +3,18 @@
 # raku Dan
 Top level raku **D**ata **AN**alysis Module
 
-[to my knowledge none of this exists yet]
-
 The initial focus is a minimal set of datatype roles:
 - Dan::DataSlices
 - Dan::Series
 - Dan::DataFrames
 
-These roles provide a common raku API for Data Analytic, Numeric & Scientific bindings...
+These roles provide a common raku presentation for Data Analytic, Numeric & Scientific bindings...
 - Dan::Pandas  - binding to pandas via Inline::Python
 - Dan::Polars  - binding to polars via Rust FFI
 - Dan::Paddle  - binding to Perl(5) Data Language using Inline::Perl5
 - NumRa
 - SciRa
+- [to my knowledge none of this exists yet]
 
 raku Dan is rather a zen concept since:
 - raku contains many Data Analysis constructs & concepts natively anyway
