@@ -1,7 +1,7 @@
 **Very much a work in progress - contributions very welcome!**
 
 # raku Dan
-Top raku **D**ata **An**alysis Module
+Top level raku **D**ata **AN**alysis Module
 
 [to my knowledge none of this exists yet]
 
