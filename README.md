@@ -8,7 +8,7 @@ Top raku **D**ata **An**alysis Module
 The initial focus is a minimal set of datatype roles:
 - Dan::DataSlices
 - Dan::Series
-- DataFrames
+- Dan::DataFrames
 
 These roles provide a common raku API for Data Analytic, Numeric & Scientific bindings...
 - Dan::Pandas  - binding to pandas via Inline::Python
