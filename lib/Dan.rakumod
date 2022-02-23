@@ -423,8 +423,9 @@ role DataFrame does Positional does Iterable is export {
                     [0..^@!data.elems].map( {%!index{$_.Str} = $_} );
                 }
                 if ! %!columns {
-                    @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} );
-                    %!columns
+                    @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} ).eager;
+                    #eager @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} );
+                    #%!columns  #<== have to "touch" %!columns to avoid empty hash
                 }
                 #no-op
             } 
