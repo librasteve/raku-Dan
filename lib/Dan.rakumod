@@ -400,7 +400,7 @@ role DataFrame does Positional does Iterable is export {
                 $.load-from-series: @series, $row-count;
 
                 # make index Hash
-                %.index = @series.first.index;
+                %!index = @series.first.index;
             }
 
             # data arg is 1d Array of DataSlice (rows)
@@ -412,7 +412,7 @@ role DataFrame does Positional does Iterable is export {
                 $.load-from-slices: @slices;
 
                 # make columns Hash
-                %.columns = @slices.first.index;
+                %!columns = @slices.first.index;
             }
 
             # data arg is 2d Array (already) 
@@ -420,10 +420,11 @@ role DataFrame does Positional does Iterable is export {
                 die "columns.elems != data.first.elems" if ( %!columns && %!columns.elems != @!data.first.elems );
 
                 if ! %!index {
-                    [0..^@!data.elems].map( {%!index{$_.Str} = $_} )
+                    [0..^@!data.elems].map( {%!index{$_.Str} = $_} );
                 }
                 if ! %!columns {
-                    @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} ) 
+                    @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} );
+                    %!columns
                 }
                 #no-op
             } 

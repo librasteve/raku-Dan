@@ -3,14 +3,17 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 36;
+plan 37;
 
 use Dan;
 
 ## DataFrames
 
+my \d = DataFrame.new( [[rand xx 4] xx 6], );
+ok d.columns.elems == 4,                                                    'new auto';
+
 my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];    #say dates;
-my \df = DataFrame.new( [[0..3] xx 6], index => dates, columns => <A B C D> );
+my \df = DataFrame.new( data => [[0..3] xx 6], index => dates, columns => <A B C D> );
 
 ok df.columns.elems == 4,                                                   'new DataFrame';
 ok df.elems == 6,                                                           '.elems';
