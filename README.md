@@ -84,7 +84,7 @@ say ~df[0..*-2][1..*-1];    #2d DataFrame
 # Associative slices: <A C D>, {'A'..'C'}
 # viz. https://docs.raku.org/language/subscripts
 
-# Taking a row slice makes an Array of DataSlices
+# Taking a bare row slice makes an Array of DataSlices
 # the ^ postfix converts them into a new DataFrame
 say ~df{dates[0..1]}^;    
 
