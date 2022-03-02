@@ -8,7 +8,7 @@ The initial focus is a minimal set of datatype roles:
 - Dan::Series
 - Dan::DataFrames
 
-These roles provide a common raku presentation for Data Analytic, Numeric & Scientific bindings...
+These roles provide a common raku presentation for possible Data Analytic, Numeric & Scientific bindings...
 - Dan::Pandas  - binding to pandas via Inline::Python
 - Dan::Polars  - binding to polars via Rust FFI
 - Dan::Paddle  - binding to Perl(5) Data Language using Inline::Perl5
