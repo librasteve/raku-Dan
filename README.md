@@ -28,6 +28,7 @@ So what are we getting from raku core that others do in libraries?
 - map, reduce, hyper operators
 - operator overloading
 - concurrency
+- types (incl. NaN)
 
 # SYNOPOSIS
 
