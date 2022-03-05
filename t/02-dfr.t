@@ -5,7 +5,7 @@ use lib '../lib';
 use Test;
 plan 37;
 
-use Dan;
+use Dan :ALL;
 
 ## DataFrames
 

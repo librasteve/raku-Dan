@@ -5,7 +5,7 @@ use lib '../lib';
 use Test;
 plan 30;
 
-use Dan;
+use Dan :ALL;
 
 ## DataSlices
 
@@ -31,7 +31,7 @@ s = Series.new([0.23945079728503804e0 xx 5], index => <a b c d e>);
 is ~s, "a\t0.23945079728503804\nb\t0.23945079728503804\nc\t0.23945079728503804\nd\t0.23945079728503804\ne\t0.23945079728503804\ndtype: Num, name: anon\n",                                     'explicit index';
 
 s = Series.new([b=>1, a=>0, c=>2]);
-is ~s, "a\t1\nb\t0\nc\t2\ndtype: Int, name: anon\n",                        'Array of Pairs';
+is ~s, "b\t1\na\t0\nc\t2\ndtype: Int, name: anon\n",                        'Array of Pairs';
 
 s = Series.new(5e0, index => <a b c d e>);
 is ~s, "a\t5\nb\t5\nc\t5\nd\t5\ne\t5\ndtype: Num, name: anon\n",            'expand Scalar';

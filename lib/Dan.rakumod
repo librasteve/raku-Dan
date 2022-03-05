@@ -17,13 +17,24 @@ Todos
 - df.sort
 - df.grep
 - df.describe
-^^^ done
 - META6.json with deps
+
+v1 Backlog
+- Apply Dan::Pandas spike 
+- Setting data
+-- reindex
+^^^ done
+-- drop
+-- assign
+-- combine
+-- concat (cover append, join, merge)
+- Shape (just simple)
+- Input/Output (just csv)
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
+- Exceptions
 - Apply
-- Setting data
 - Index alignment
 - Missing data
 - Duplicate labels
@@ -39,10 +50,8 @@ v2 Backlog
 - Time Series
 - Categoricals (Enums)
 - Plotting
-- Input/Output
-- Exceptions
 
-Issues
+Issues/Questions
 - keep manual Series dtype over column slicing (?)
 
 Operations
@@ -66,11 +75,11 @@ df2.B                  df2.duplicated
 constant @alphi = 'A'..∞; 
 
 # sorts Hash by value, returns keys (poor woman's Ordered Hash)
-sub sbv( %h --> Seq ) is export {
+sub sbv( %h --> Seq ) is export(:ALL) {
     %h.sort(*.value).map(*.key)
 }
 
-role DataSlice does Positional does Iterable is export {
+role DataSlice does Positional does Iterable is export(:ALL) {
     has Str     $.name is rw = 'anon';
     has Any     @.data;
     has Int     %.index;
@@ -80,6 +89,61 @@ role DataSlice does Positional does Iterable is export {
     # accept index as List, make Hash
     multi method new( List:D :$index, *%h ) {
         samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
+    }
+
+    #### MAC Methods #####
+    #Moves, Adds, Changes#
+
+    multi method ix {
+        %.index.&sbv
+    }
+
+    multi method ix( @new-index ) {
+        %.index.keys.map: { %.index{$_}:delete };
+        @new-index.map:   { %.index{$_} = $++  };
+    }
+
+    method aop {
+        self.ix.map({ $_ => @.data[$++] })
+    }
+
+    method splice( DataSlice:D: $start = 0, $elems?, :@index, *@replace ) {
+
+#`[[
+        my $new-start;
+        given $start {
+            when Callable     { $new-start = $new-start( self.elems ) }
+            when Whatever     { $new-start = self.elems }
+        }
+
+        my $size = self.elems - $new-start;
+
+        my $new-elems;
+        given $elems {
+            when Callable     { $new-elems = $new-elems( $size ) }
+            when Whatever     { $new-elems = $size }
+        }
+#]]
+
+        if @index {
+            die "index.elems != replace.elems" if @index.elems != @replace.elems;
+
+            my @aop = self.aop;
+
+            my @rope = gather {
+                @index.map({ take $_ => @replace[$++] }) 
+            }
+
+            say @aop.splice($start, $elems//*, @rope);
+
+            #my @new-index = self.ix;
+            #@new-index.splice($start, $elems//*, @index); 
+            #self.ix: @new-index; 
+
+        } else {
+            @!data.splice($start, $elems//*, @replace); 
+        }
+        @!data
     }
 
     ### Output Methods ###
@@ -154,7 +218,7 @@ role DataSlice does Positional does Iterable is export {
     }
 }
 
-role Series does DataSlice is export {
+role Series does DataSlice is export(:ALL) {
     has Any:U       $.dtype;                  #ie. type object
 
     ### Constructors ###
@@ -201,7 +265,7 @@ role Series does DataSlice is export {
             @.data = gather {
                 for @.data -> $p {
                     take $p.value;
-                    %.index.push: $p;
+                    %.index{$p.key} = $++;
                 }
             }.Array
 
@@ -245,10 +309,6 @@ role Series does DataSlice is export {
 
     ### Mezzanine methods ###  (these use Accessors)
 
-    method ix {
-        %.index.&sbv
-    }
-
     method count { 
         $.elems 
     }
@@ -291,14 +351,14 @@ role Series does DataSlice is export {
     }
 }
 
-role Categorical is Series is export {
+role Categorical is Series is export(:ALL) {
     # Output
     method dtype {
         Str.^name
     }
 }
 
-role DataFrame does Positional does Iterable is export {
+role DataFrame does Positional does Iterable is export(:ALL) {
     has Str         $.name is rw = 'anon';
     has Any         @.data = [];        #redo 2d shaped Array when [; ] implemented
     has Int         %.index;            #row index
@@ -432,6 +492,31 @@ role DataFrame does Positional does Iterable is export {
         }
     }
 
+    #### MAC Methods #####
+    #Moves, Adds, Changes#
+
+    multi method ix {
+        %!index.&sbv
+    }
+
+    multi method ix( @new-index ) {
+        die "New index must be List with {%.index.elems} elems" unless @new-index.elems == %.index.elems;
+
+        %.index.keys.map: { %.index{$_}:delete };
+        @new-index.map:   { %.index{$_} = $++  };
+    }
+
+    multi method cx {
+        %!columns.&sbv
+    }
+
+    multi method cx( @new-labels ) {
+        die "New labels must be List with {%.columns.elems} elems" unless @new-labels.elems == %.columns.elems;
+
+        %.columns.keys.map: { %.columns{$_}:delete };
+        @new-labels.map:    { %.columns{$_} = $++  };
+    }
+
     ### Mezzanine methods ###  (these use Accessors)
 
     method T {
@@ -440,14 +525,6 @@ role DataFrame does Positional does Iterable is export {
 
     method series( $k ) {
         self.[*]{$k}
-    }
-
-    method ix {
-        %!index.&sbv
-    }
-
-    method cx {
-        %!columns.&sbv
     }
 
     method sort( &cruton ) {  #&custom-routine-to-use
@@ -583,17 +660,17 @@ role DataFrame does Positional does Iterable is export {
 }
 
 ### Postfix '^' as explicit subscript chain terminator
-multi postfix:<^>( DataSlice @ds ) is export {
+multi postfix:<^>( DataSlice @ds ) is export(:ALL) {
     DataFrame.new(@ds) 
 }
-multi postfix:<^>( DataSlice $ds ) is export {
+multi postfix:<^>( DataSlice $ds ) is export(:ALL) {
     DataFrame.new(($ds,)) 
 }
 
 ### Override first subscript [i] to make DataSlices (rows)
 
 #| provides single DataSlice which can be [j] subscripted directly to value 
-multi postcircumfix:<[ ]>( DataFrame:D $df, Int $p ) is export {
+multi postcircumfix:<[ ]>( DataFrame:D $df, Int $p ) is export(:ALL) {
     DataSlice.new( data => $df.data[$p;*], index => $df.columns, name => $df.index.&sbv[$p] )
 }
 
@@ -605,14 +682,14 @@ sub make-aods( $df, @s ) {
 }
 
 #| slices make Array of DataSlice objects
-multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export {
+multi postcircumfix:<[ ]>( DataFrame:D $df, @s where Range|List ) is export(:ALL) {
     make-aods( $df, @s )
 }
-multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export {
+multi postcircumfix:<[ ]>( DataFrame:D $df, WhateverCode $p ) is export(:ALL) {
     my @s = $p( |($df.elems xx $p.arity) );
     make-aods( $df, @s )
 }
-multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export {
+multi postcircumfix:<[ ]>( DataFrame:D $df, Whatever ) is export(:ALL) {
     my @s = 0..^$df.elems; 
     make-aods( $df, @s )
 }
@@ -635,39 +712,39 @@ sub make-series( @sls ) {
 }
 
 #| provides single Series which can be [j] subscripted directly to value 
-multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export {
+multi postcircumfix:<[ ]>( DataSlice @aods , Int $p ) is export(:ALL) {
     make-series( sliced-slices(@aods, ($p,)) )
 }
 
 #| make DataFrame from sliced DataSlices 
-multi postcircumfix:<[ ]>( DataSlice @aods , @s where Range|List ) is export {
+multi postcircumfix:<[ ]>( DataSlice @aods , @s where Range|List ) is export(:ALL) {
     DataFrame.new( sliced-slices(@aods, @s) )
 }
-multi postcircumfix:<[ ]>( DataSlice @aods, WhateverCode $p ) is export {
+multi postcircumfix:<[ ]>( DataSlice @aods, WhateverCode $p ) is export(:ALL) {
     my @s = $p( |(@aods.first.elems xx $p.arity) );
     DataFrame.new( sliced-slices(@aods, @s) )
 }
-multi postcircumfix:<[ ]>( DataSlice @aods, Whatever ) is export {
+multi postcircumfix:<[ ]>( DataSlice @aods, Whatever ) is export(:ALL) {
     my @s = 0..^@aods.first.elems;
     DataFrame.new( sliced-slices(@aods, @s) )
 }
 
 ### Override first assoc subscript {i}
 
-multi postcircumfix:<{ }>( DataFrame:D $df, $k ) is export {
+multi postcircumfix:<{ }>( DataFrame:D $df, $k ) is export(:ALL) {
     $df[$df.index{$k}]
 }
-multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export {
+multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export(:ALL) {
     $df[$df.index{@ks}]
 }
 
 ### Override second subscript [j] to make DataFrame
 
-multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export {
+multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export(:ALL) {
     my $p = @aods.first.index{$k};
     make-series( sliced-slices(@aods, ($p,)) )
 }
-multi postcircumfix:<{ }>( DataSlice @aods , @ks ) is export {
+multi postcircumfix:<{ }>( DataSlice @aods , @ks ) is export(:ALL) {
     my @s = @aods.first.index{@ks};
     DataFrame.new( sliced-slices(@aods, @s) )
 }
