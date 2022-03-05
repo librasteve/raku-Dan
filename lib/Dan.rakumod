@@ -106,11 +106,37 @@ role DataSlice does Positional does Iterable is export(:ALL) {
     }
 
     #| get self as Array of Pairs
-    method aop {
+    multi method aop {
         self.ix.map({ $_ => @.data[$++] })
     }
 
-    method splice( DataSlice:D: $start = 0, $elems?, :@index, *@replace ) {
+    #| set data and index from Array of Pairs
+    multi method aop( @aop ) {
+        self.ix:    @aop.map(*.key);
+        self.data = @aop.map(*.value);
+    }
+
+    #| set empty data slots to Nan
+    method fillna {
+        my @emt := self.aop.grep({! $_.value.defined }).Array;
+        @emt.map({ $_.value = NaN });
+    }
+
+    method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
+
+        given @replace {
+            when .first ~~ Pair {
+                my @aop = self.aop;
+                my @res = @aop.splice($start, $elems//*, @replace);
+                self.aop: @aop;
+                @res
+            }
+            default {
+                my @res = @!data.splice($start, $elems//*, @replace); 
+                self.fillna if @replace;
+                @res
+            }
+        }
 
 #`[[
         my $new-start;
@@ -128,25 +154,7 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         }
 #]]
 
-        if @index {
-            die "index.elems != replace.elems" if @index.elems != @replace.elems;
-
-            my @aop = self.aop;
-
-            my @rope = gather {
-                @index.map({ take $_ => @replace[$++] }) 
-            }
-
-            say @aop.splice($start, $elems//*, @rope);
-
-            #my @new-index = self.ix;
-            #@new-index.splice($start, $elems//*, @index); 
-            #self.ix: @new-index; 
-
-        } else {
-            @!data.splice($start, $elems//*, @replace); 
-        }
-        @!data
+        #@!data
     }
 
     ### Output Methods ###
