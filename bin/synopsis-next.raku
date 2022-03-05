@@ -19,9 +19,10 @@ say ~s;
 s.ix: <b c d>;
 say ~s; 
 
-say s.splice: *-1 ;    #[2]
+#say s.splice: *-1 ;    #[2]
+#s.dropna;
 #say s.splice(1,2,3);   #[0 2]
-#s.splice( 1,2,(j => 3,) );
+s.splice( 1,2,(j => 3,) );
 say ~s; 
 #say s.ix;
 die;

@@ -118,8 +118,20 @@ role DataSlice does Positional does Iterable is export(:ALL) {
 
     #| set empty data slots to Nan
     method fillna {
-        my @emt := self.aop.grep({! $_.value.defined }).Array;
+        my @emt := self.aop.grep(! *.value.defined).Array;
         @emt.map({ $_.value = NaN });
+    }
+
+    #| drop index and data when Nan
+    method dropna {
+        my @aok = self.aop.grep(*.value ne NaN).Array;
+        self.aop: @aok
+    }
+
+    #| drop index and data when empty 
+    method dropem {
+        my @aok = self.aop.grep(*.value.defined).Array;
+        self.aop: @aok
     }
 
     method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
@@ -133,7 +145,7 @@ role DataSlice does Positional does Iterable is export(:ALL) {
             }
             default {
                 my @res = @!data.splice($start, $elems//*, @replace); 
-                self.fillna if @replace;
+                self.fillna; 
                 @res
             }
         }
