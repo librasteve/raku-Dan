@@ -94,15 +94,18 @@ role DataSlice does Positional does Iterable is export(:ALL) {
     #### MAC Methods #####
     #Moves, Adds, Changes#
 
+    #| get index as Array (ordered by %.index.values)
     multi method ix {
         %.index.&sbv
     }
 
+    #| set (re)index from Array
     multi method ix( @new-index ) {
         %.index.keys.map: { %.index{$_}:delete };
         @new-index.map:   { %.index{$_} = $++  };
     }
 
+    #| get self as Array of Pairs
     method aop {
         self.ix.map({ $_ => @.data[$++] })
     }
