@@ -39,7 +39,7 @@ v2 Backlog
 - Apply?
 -- .map ok 
 - Duplicate labels?
--- don't support
+-- don't support, need to detect and error
 - Index alignment?
 -- just an outer concat with fillna
 - String ops?
@@ -529,30 +529,46 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         @new-labels.map:    { %.columns{$_} = $++  };
     }
 
+    #| get rows as Array of DataSlices 
+    multi method rad {
+        self.[*]
+    }
+
+    #| set rows from Array of DataSlices 
+    multi method rad( @rad ) {
+        @!data = [];
+        %!index = %();
+        self.load-from-slices: @rad
+    }
+
+
     #| get self as Array of Pairs (index => DataSlice) [rows]
-    multi method aop {
+    multi method rap {
         my @slices = self.[*];
         self.ix.map({ $_ => @slices[$++] })
     }
 
     #| set self from Array of Pairs (index => DataSlice) [rows]
-    multi method aop( @aop ) {
-        self.ix:    @aop.map(*.key);
-        self.data = @aop.map(*.value);
+    multi method rap( @rap ) {
+        self.ix:    @rap.map(*.key);
+        self.data = @rap.map(*.value);
     }
 
-    #| splice rows as Array of values or Array of Pairs
+    #| splice rows as Array of DataSlices or Array of Pairs (index => DataSlice)
     #| viz. https://docs.raku.org/routine/splice
     method splicer( DataFrame:D: $start = 0, $elems?, *@replace ) {
         given @replace {
             when .first ~~ Pair {
-                my @aop = self.aop;
-                my @res = @aop.splice($start, $elems//*, @replace);
-                self.aop: @aop;
+                my @rap = self.rap;
+                my @res = @rap.splice($start, $elems//*, @replace);
+                self.rap: @rap;
                 @res
             }
             default {
-                @!data.splice($start, $elems//*, @replace); 
+                my @rad = self.rad;
+                my @res = @rad.splice($start, $elems//*, @replace); 
+                self.rad: @rad;
+                @res
             }
         }
     }
@@ -567,6 +583,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     multi method cas( @cas ) {
         @!data = [];
         %!columns = %();
+        @!dtypes = [];
         self.load-from-series: @cas, @cas.first.elems;
     }
 
@@ -577,8 +594,11 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| set cols from Array of Pairs (columns => Series)
     multi method cap( @cap ) {
+        @!data = [];
+        %!columns = %();
+        @!dtypes = [];
+        self.load-from-series: @cap.map(*.value), @cap.first.value.elems;
         self.cx:    @cap.map(*.key);
-        self.data = @cap.map(*.value);
     }
 
     #| splice cols as Array of values or Array of Pairs

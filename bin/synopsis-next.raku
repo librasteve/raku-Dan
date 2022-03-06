@@ -125,22 +125,41 @@ my \df2 = DataFrame.new([
         F => "foo",
 ]);
 
+say ~df2; 
 #`[[
+# Array of objects (DataSlice|Series) uses object .name 
+# Array of Pairs uses Pair .key for index / columns
+# raku Dan does not support duplicate keys (need an error)
+
+#rows
 #say df2.splice: *-1 ;    #[[1 2022-01-01 1 3 train foo]]
 
 my $ds = df2[1];
 $ds.splice($ds.index<D>,1,7); #same as $ds.splice(4,1,7);
-#df2.splice(1,2,$ds);
+$ds.name = '7';
+#df2.splice(2,1,$ds);
 
 df2.splice( 1,2,(j => $ds,) );
 #]]
 
-#dd df2.cap;
+#[[
+#cols
+#df2.splice: *-1 ;    #[Dan::Series.new(dtype => Str, name => "F", ... ]
 
-say df2.splice: *-1 ;    #[Dan::Series.new(dtype => Str, name => "F", ... ]
+my $se = df2.series: <A>;
+$se.name = 'X';
+$se.splice(2,1,7);
+
+#df2.splice(3,2,$se);
+
+df2.splice( 1,2,(K => $se,) );
+say $se.dtype;
+#]]
+say ~df2;
+say ~df2.dtypes; 
 
 
-say ~df2; 
+#splicer
 
 #`[[
 s.ix: <b c d>;
