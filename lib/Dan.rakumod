@@ -529,6 +529,8 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         @new-labels.map:    { %.columns{$_} = $++  };
     }
 
+    ### Splicing ###
+
     #| get rows as Array of DataSlices 
     multi method rad {
         self.[*]
@@ -540,7 +542,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         %!index = %();
         self.load-from-slices: @rad
     }
-
 
     #| get self as Array of Pairs (index => DataSlice) [rows]
     multi method rap {
@@ -556,7 +557,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| splice rows as Array of DataSlices or Array of Pairs (index => DataSlice)
     #| viz. https://docs.raku.org/routine/splice
-    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
+    method splice-r( DataFrame:D: $start = 0, $elems?, *@replace ) {
         given @replace {
             when .first ~~ Pair {
                 my @rap = self.rap;
@@ -573,6 +574,13 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
+    #| reset attributes
+    method reset {
+        @!data = [];
+        %!columns = %();
+        @!dtypes = [];
+    }
+
     #| get cols as Array of Series
     multi method cas {
         self.cx.map({self.series($_)}).Array;
@@ -580,9 +588,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| set cols from Array of Series
     multi method cas( @cas ) {
-        @!data = [];
-        %!columns = %();
-        @!dtypes = [];
+        self.reset;
         self.load-from-series: @cas, @cas.first.elems;
     }
 
@@ -593,16 +599,14 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| set cols from Array of Pairs (columns => Series)
     multi method cap( @cap ) {
-        @!data = [];
-        %!columns = %();
-        @!dtypes = [];
+        self.reset;
         self.load-from-series: @cap.map(*.value), @cap.first.value.elems;
         self.cx:    @cap.map(*.key);
     }
 
     #| splice cols as Array of values or Array of Pairs
     #| viz. https://docs.raku.org/routine/splice
-    method splicec( DataFrame:D: $start = 0, $elems?, *@replace ) {
+    method splice-c( DataFrame:D: $start = 0, $elems?, *@replace ) {
         given @replace {
             when .first ~~ Pair {
                 my @cap = self.cap;
