@@ -152,11 +152,10 @@ $se.splice(2,1,7);
 
 #df2.splice(3,2,$se);
 
-df2.splice( 1,2,(K => $se,) );
-say $se.dtype;
+#df2.splice(1,2,(K => $se,) );
+df2.splicec(:c,1,1,(K => $se,) );
 #]]
 say ~df2;
-say ~df2.dtypes; 
 
 
 #splicer

@@ -556,7 +556,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| splice rows as Array of DataSlices or Array of Pairs (index => DataSlice)
     #| viz. https://docs.raku.org/routine/splice
-    method splicer( DataFrame:D: $start = 0, $elems?, *@replace ) {
+    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
         given @replace {
             when .first ~~ Pair {
                 my @rap = self.rap;
@@ -573,7 +573,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
-    #iamerejh - now for cols
     #| get cols as Array of Series
     multi method cas {
         self.cx.map({self.series($_)}).Array;
@@ -603,7 +602,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     #| splice cols as Array of values or Array of Pairs
     #| viz. https://docs.raku.org/routine/splice
-    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
+    method splicec( DataFrame:D: $start = 0, $elems?, *@replace ) {
         given @replace {
             when .first ~~ Pair {
                 my @cap = self.cap;
@@ -621,7 +620,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
 
 #`[[
-#following 3x methods make df wide
+#make df wide
     #| set empty data slots to Nan
     method fillna {
         self.aop.grep(! *.value.defined).map({ $_.value = NaN });
@@ -637,23 +636,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         self.aop: self.aop.grep(*.value.defined).Array;
     }
 #]]
-
-#`[[ maybe useful
-        my $new-start;
-        given $start {
-            when Callable     { $new-start = $new-start( self.elems ) }
-            when Whatever     { $new-start = self.elems }
-        }
-
-        my $size = self.elems - $new-start;
-
-        my $new-elems;
-        given $elems {
-            when Callable     { $new-elems = $new-elems( $size ) }
-            when Whatever     { $new-elems = $size }
-        }
-#]]
-
 
     ### Mezzanine methods ###  (these use Accessors)
 
