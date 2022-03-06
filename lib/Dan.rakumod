@@ -529,18 +529,75 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         @new-labels.map:    { %.columns{$_} = $++  };
     }
 
-    #iamerejh - doing rows first
-    #| get self as Array of Pairs (Index => DataSlice) (rows)
+    #| get self as Array of Pairs (index => DataSlice) [rows]
     multi method aop {
-        say "yo";
         my @slices = self.[*];
         self.ix.map({ $_ => @slices[$++] })
     }
 
-    #| set data and index from Array of Pairs
+    #| set self from Array of Pairs (index => DataSlice) [rows]
     multi method aop( @aop ) {
         self.ix:    @aop.map(*.key);
         self.data = @aop.map(*.value);
+    }
+
+    #| splice rows as Array of values or Array of Pairs
+    #| viz. https://docs.raku.org/routine/splice
+    method splicer( DataFrame:D: $start = 0, $elems?, *@replace ) {
+        given @replace {
+            when .first ~~ Pair {
+                my @aop = self.aop;
+                my @res = @aop.splice($start, $elems//*, @replace);
+                self.aop: @aop;
+                @res
+            }
+            default {
+                @!data.splice($start, $elems//*, @replace); 
+            }
+        }
+    }
+
+    #iamerejh - now for cols
+    #| get cols as Array of Series
+    multi method cas {
+        self.cx.map({self.series($_)}).Array;
+    }
+
+    #| set cols from Array of Series
+    multi method cas( @cas ) {
+        @!data = [];
+        %!columns = %();
+        self.load-from-series: @cas, @cas.first.elems;
+    }
+
+    #| get cols as Array of Pairs (columns => Series)
+    multi method cap {
+        self.cx.map({ $_ => self.cas[$++] })
+    }
+
+    #| set cols from Array of Pairs (columns => Series)
+    multi method cap( @cap ) {
+        self.cx:    @cap.map(*.key);
+        self.data = @cap.map(*.value);
+    }
+
+    #| splice cols as Array of values or Array of Pairs
+    #| viz. https://docs.raku.org/routine/splice
+    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
+        given @replace {
+            when .first ~~ Pair {
+                my @cap = self.cap;
+                my @res = @cap.splice($start, $elems//*, @replace);
+                self.cap: @cap;
+                @res
+            }
+            default {
+                my @cas = self.cas;
+                my @res = @cas.splice($start, $elems//*, @replace); 
+                self.cas: @cas;
+                @res
+            }
+        }
     }
 
 #`[[
@@ -560,22 +617,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         self.aop: self.aop.grep(*.value.defined).Array;
     }
 #]]
-
-    #| splice as Array of values or Array of Pairs
-    #| viz. https://docs.raku.org/routine/splice
-    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
-        given @replace {
-            when .first ~~ Pair {
-                my @aop = self.aop;
-                my @res = @aop.splice($start, $elems//*, @replace);
-                self.aop: @aop;
-                @res
-            }
-            default {
-                @!data.splice($start, $elems//*, @replace); 
-            }
-        }
-    }
 
 #`[[ maybe useful
         my $new-start;

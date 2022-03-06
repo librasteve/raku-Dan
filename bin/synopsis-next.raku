@@ -130,10 +130,15 @@ my \df2 = DataFrame.new([
 
 my $ds = df2[1];
 $ds.splice($ds.index<D>,1,7); #same as $ds.splice(4,1,7);
-df2.splice(1,2,$ds);
+#df2.splice(1,2,$ds);
 
 df2.splice( 1,2,(j => $ds,) );
 #]]
+
+#dd df2.cap;
+
+say df2.splice: *-1 ;    #[Dan::Series.new(dtype => Str, name => "F", ... ]
+
 
 say ~df2; 
 
