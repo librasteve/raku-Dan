@@ -16,19 +16,18 @@ s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
 
 say ~s; 
 
+#`[[
 s.ix: <b c d>;
 say ~s; 
 
-#say s.splice: *-1 ;    #[2]
-#s.dropna;
+say s.splice: *-1 ;    #[2]
+s.dropna;
 #say s.splice(1,2,3);   #[0 2]
-s.splice( 1,2,(j => 3,) );
+#s.splice( 1,2,(j => 3,) );
 say ~s; 
 #say s.ix;
-die;
 
-#this is inadequate because (i) does not affect pos access (ii) does not delete data value
-#however, it DOES do the trick and it is FAST
+#]]
 
 #`[[[
 say "---------------------------------------------";
@@ -126,14 +125,31 @@ my \df2 = DataFrame.new([
         F => "foo",
 ]);
 
+#`[[
+#say df2.splice: *-1 ;    #[[1 2022-01-01 1 3 train foo]]
+
+my $ds = df2[1];
+$ds.splice($ds.index<D>,1,7); #same as $ds.splice(4,1,7);
+df2.splice(1,2,$ds);
+
+df2.splice( 1,2,(j => $ds,) );
+#]]
+
 say ~df2; 
 
+#`[[
+s.ix: <b c d>;
+#say s.ix;
+
+s.dropna;
+#]]
+
+#`[[[
 df2.ix: <a b c d>;
 say ~df2; 
 df2.cx: <a b c d e f>;
 say ~df2; 
 
-#`[[[
 say "---------------------------------------------";
 say df2.data;
 say df2.index;

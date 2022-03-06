@@ -20,31 +20,38 @@ Todos
 - META6.json with deps
 
 v1 Backlog
-- Apply Dan::Pandas spike 
-- Setting data
--- reindex
+- Dan::Pandas spike 
+- Array MACs 
+-- ix (for reindex)
+-- splice (for drop, assign, append, push, pop, shift, unshift)
+- Missing data
+-- fillna, dropna, dropem
 ^^^ done
--- drop
--- assign
+- for df
+- Combiners 
 -- combine
--- concat (cover append, join, merge)
+-- concat (for join, merge)
 - Shape (just simple)
 - Input/Output (just csv)
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
+- Apply?
+-- .map ok 
+- Duplicate labels?
+-- don't support
+- Index alignment?
+-- just an outer concat with fillna
+- String ops?
+-- .map ok (regex example)
+- Merge & Join?
+-- .concat ok
+- Set style ops
 - Exceptions
-- Apply
-- Index alignment
-- Missing data
-- Duplicate labels
 - Stats
 - Histogramming
-- String ops
-- Merge
-- Join 
-- Group
 - SQL style ops
+-- Group by
 - Reshaping (stacking)
 - Pivot tables
 - Time Series
@@ -118,24 +125,22 @@ role DataSlice does Positional does Iterable is export(:ALL) {
 
     #| set empty data slots to Nan
     method fillna {
-        my @emt := self.aop.grep(! *.value.defined).Array;
-        @emt.map({ $_.value = NaN });
+        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
     }
 
     #| drop index and data when Nan
     method dropna {
-        my @aok = self.aop.grep(*.value ne NaN).Array;
-        self.aop: @aok
+        self.aop: self.aop.grep(*.value ne NaN);
     }
 
     #| drop index and data when empty 
     method dropem {
-        my @aok = self.aop.grep(*.value.defined).Array;
-        self.aop: @aok
+        self.aop: self.aop.grep(*.value.defined).Array;
     }
 
+    #| splice as Array of values or Array of Pairs
+    #| viz. https://docs.raku.org/routine/splice
     method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
-
         given @replace {
             when .first ~~ Pair {
                 my @aop = self.aop;
@@ -149,24 +154,6 @@ role DataSlice does Positional does Iterable is export(:ALL) {
                 @res
             }
         }
-
-#`[[
-        my $new-start;
-        given $start {
-            when Callable     { $new-start = $new-start( self.elems ) }
-            when Whatever     { $new-start = self.elems }
-        }
-
-        my $size = self.elems - $new-start;
-
-        my $new-elems;
-        given $elems {
-            when Callable     { $new-elems = $new-elems( $size ) }
-            when Whatever     { $new-elems = $size }
-        }
-#]]
-
-        #@!data
     }
 
     ### Output Methods ###
@@ -241,6 +228,7 @@ role DataSlice does Positional does Iterable is export(:ALL) {
     }
 }
 
+#| Series is a shim on DataSlice to mix in dtype and legacy constructors
 role Series does DataSlice is export(:ALL) {
     has Any:U       $.dtype;                  #ie. type object
 
@@ -276,8 +264,9 @@ role Series does DataSlice is export(:ALL) {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
+    # provide ^name of type object eg. for output
     multi method dtype {
-        $!dtype.^name       #provide ^name of type object eg. for output
+        $!dtype.^name       
     }
 
     method TWEAK {
@@ -518,27 +507,92 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     #### MAC Methods #####
     #Moves, Adds, Changes#
 
+    #| get index as Array (ordered by %.index.values)
     multi method ix {
         %!index.&sbv
     }
 
+    #| set (re)index from Array
     multi method ix( @new-index ) {
-        die "New index must be List with {%.index.elems} elems" unless @new-index.elems == %.index.elems;
-
         %.index.keys.map: { %.index{$_}:delete };
         @new-index.map:   { %.index{$_} = $++  };
     }
 
+    #| get columns as Array (ordered by %.column.values)
     multi method cx {
         %!columns.&sbv
     }
 
+    #| set columns (relabel) from Array
     multi method cx( @new-labels ) {
-        die "New labels must be List with {%.columns.elems} elems" unless @new-labels.elems == %.columns.elems;
-
         %.columns.keys.map: { %.columns{$_}:delete };
         @new-labels.map:    { %.columns{$_} = $++  };
     }
+
+    #iamerejh - doing rows first
+    #| get self as Array of Pairs (Index => DataSlice) (rows)
+    multi method aop {
+        say "yo";
+        my @slices = self.[*];
+        self.ix.map({ $_ => @slices[$++] })
+    }
+
+    #| set data and index from Array of Pairs
+    multi method aop( @aop ) {
+        self.ix:    @aop.map(*.key);
+        self.data = @aop.map(*.value);
+    }
+
+#`[[
+#following 3x methods make df wide
+    #| set empty data slots to Nan
+    method fillna {
+        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
+    }
+
+    #| drop index and data when Nan
+    method dropna {
+        self.aop: self.aop.grep(*.value ne NaN);
+    }
+
+    #| drop index and data when empty 
+    method dropem {
+        self.aop: self.aop.grep(*.value.defined).Array;
+    }
+#]]
+
+    #| splice as Array of values or Array of Pairs
+    #| viz. https://docs.raku.org/routine/splice
+    method splice( DataFrame:D: $start = 0, $elems?, *@replace ) {
+        given @replace {
+            when .first ~~ Pair {
+                my @aop = self.aop;
+                my @res = @aop.splice($start, $elems//*, @replace);
+                self.aop: @aop;
+                @res
+            }
+            default {
+                @!data.splice($start, $elems//*, @replace); 
+            }
+        }
+    }
+
+#`[[ maybe useful
+        my $new-start;
+        given $start {
+            when Callable     { $new-start = $new-start( self.elems ) }
+            when Whatever     { $new-start = self.elems }
+        }
+
+        my $size = self.elems - $new-start;
+
+        my $new-elems;
+        given $elems {
+            when Callable     { $new-elems = $new-elems( $size ) }
+            when Whatever     { $new-elems = $size }
+        }
+#]]
+
 
     ### Mezzanine methods ###  (these use Accessors)
 
