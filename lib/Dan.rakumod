@@ -22,12 +22,11 @@ Todos
 v1 Backlog
 - Dan::Pandas spike 
 - Array MACs 
--- ix (for reindex)
+-- ix,cx (for reindex)
 -- splice (for drop, assign, append, push, pop, shift, unshift)
 - Missing data
 -- fillna, dropna, dropem
 ^^^ done
-- for df
 - Combiners 
 -- combine
 -- concat (for join, merge)
@@ -36,6 +35,7 @@ v1 Backlog
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
+- Set style ops
 - Apply?
 -- .map ok 
 - Duplicate labels?
@@ -46,7 +46,6 @@ v2 Backlog
 -- .map ok (regex example)
 - Merge & Join?
 -- .concat ok
-- Set style ops
 - Exceptions
 - Stats
 - Histogramming
@@ -57,9 +56,6 @@ v2 Backlog
 - Time Series
 - Categoricals (Enums)
 - Plotting
-
-Issues/Questions
-- keep manual Series dtype over column slicing (?)
 
 Operations
 df2.A                  df2.bool
@@ -154,6 +150,22 @@ role DataSlice does Positional does Iterable is export(:ALL) {
     #| drop index and data when empty 
     method dropem {
         self.aop: self.aop.grep(*.value.defined).Array;
+    }
+
+    # concat
+    method concat( DataSlice:D \right ) {
+        self.index.map({ 
+            if right.index{$_.key}:exists {
+                warn "duplicate key {$_.key} not permitted" 
+            } 
+        });
+
+        my $start = self.index.elems;
+        my $elems = right.index.elems;
+        my @replace = right.aop;
+
+        self.splice: $start, $elems, @replace;    
+        self
     }
 
     ### Output Methods ###

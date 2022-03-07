@@ -30,6 +30,13 @@ say ~s;
 #nb must use splice to assign, delete
 #]]
 
+#`[[ concat
+say ~s.concat: s;
+
+say my \t = Series.new( [f=>1, e=>0, d=>2] );
+say ~s.concat: t;
+#]]
+
 #`[[[
 say "---------------------------------------------";
 
