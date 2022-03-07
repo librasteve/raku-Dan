@@ -68,9 +68,13 @@ my \df = DataFrame.new( [[rand xx 4] xx 6], index => dates, columns => <A B C D>
 say ~df;
 say "---------------------------------------------";
 
-# Value Accessors
+# Data Accessors
+say df[0;0];
+df[0;0] = 3;                #can set values
+
+# Smart Accessors
 say df[0][0];
-say df[0]<A>;
+say df[0]<A>;               #mix Positional and Associative
 say df{dates[0]}[0];
 say df{dates[0]}<A>;
 say df[0][*];               #1d Row 0 (Values)
