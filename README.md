@@ -94,7 +94,7 @@ say "=============================================";
 ### DataFrame Operations ###
 
 # 2d Map/Reduce
-say df.map(*.map(*+2));
+say df.map(*.map(*+2).eager);
 say [+] df[*][1];
 say [+] df[*][*];
 say ~df.T;                  #Transpose
