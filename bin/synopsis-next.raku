@@ -132,8 +132,8 @@ my \df2 = DataFrame.new([
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
+#say ~df2; 
 
-say ~df2; 
 #`[[
 # Array of objects (DataSlice|Series) uses object .name 
 # Array of Pairs uses Pair .key for index / columns
@@ -165,6 +165,33 @@ df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
 df2[0;0] = Nil;
 df2.fillna;
 say ~df2;
+#]]
+
+#[[
+my \dfa = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+my \dfb = DataFrame.new(
+        [['c', 3], ['d', 4]],
+        columns => <letter number>,
+);
+#say ~dfa.concat: dfb, :ii;
+dfa.concat: dfb;
+say ~dfa;
+
+dfa.concat: dfb;
+say ~dfa;
+
+dfa.concat: dfa, :ii;
+say ~dfa;
+
+die;
+dd dfa.ix;
+
+my \dfc = dfa;
+say ~dfc.concat: dfa, :ii;
+#say ~dfa.concat: dfc, :ii;
 #]]
 
 #`[[[

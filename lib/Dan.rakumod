@@ -582,20 +582,27 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         self.reset: :$axis;
 
         given $axis, $pair {
-            when 0, 0 {
+            when 0, 0 {                         # row - array
                 self.load-from-slices: @set
             }
-            when 0, 1 {
+            when 0, 1 {                         # row - aops 
                 self.load-from-slices: @set.map(*.value);
                 self.ix: @set.map(*.key)
             }
-            when 1, 0 {
+            when 1, 0 {                         # col - array
                 self.load-from-series: @set, @set.first.elems
             }
-            when 1, 1 {
+            when 1, 1 {                         # col - aops
                 self.load-from-series: @set.map(*.value), @set.first.value.elems;
                 self.cx: @set.map(*.key)
             }
+        }
+    }
+
+    sub clean-axis( :$axis ) {
+        given $axis {
+            when ! .so || /row/ { 0 }
+            when   .so || /col/ { 1 }
         }
     }
 
@@ -603,10 +610,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataFrame:D: $start = 0, $elems?, :ax(:$axis) is copy, *@replace ) {
 
-        given $axis {
-            when ! .so || /row/ { $axis = 0 }
-            when   .so || /col/ { $axis = 1 }
-        }
+        $axis = clean-axis(:$axis);
 
         my $pair = @replace.first ~~ Pair ?? 1 !! 0;
 
@@ -615,6 +619,52 @@ role DataFrame does Positional does Iterable is export(:ALL) {
                   self.set-ap: :$axis, :$pair, @wip;
 
         @res
+    }
+
+    # concat
+    method concat( DataFrame:D \right, :ax(:$axis) is copy, 
+                     :$join = 'outer', :ii(:$ignore-index) ) {
+
+        $axis = clean-axis(:$axis);
+
+        #axis dependent
+        my $start = self.index.elems;
+        my $elems = right.index.elems;
+
+        my @replace = right.get-ap( :$axis, pair => 1 );
+
+        if ! $axis {            # row
+            
+            my $mark = '⋅'; # unicode Dot Operator U+22C5
+            my regex notmark { <-[⋅]> }
+
+            my $dupes = ().BagHash;
+            self.ix.map({ $_ ~~ / ^ (<notmark>*) /; $dupes.add(~$0) }); 
+
+            @replace.map({ 
+                if self.index{$_.key}:exists {
+                    #warn "duplicate key {$_.key}";
+
+                    $_.key ~~ / ^ (<notmark>*) /;
+                    my $b-key = ~$0;
+                    my $n-key = $b-key ~ $mark ~ $dupes{$b-key};
+
+                    $_ = $n-key => $_.value; 
+                    $dupes{$b-key}++;
+                } 
+            });
+
+            self.splice: $start, $elems, @replace;    
+
+            if $ignore-index {
+                my @new-ix = self.ix;
+                self.index = %();
+                my $i = 0;
+                @new-ix.map({ self.index{~$i} = $i++ }) 
+            } 
+
+            self
+        }
     }
 
     ### Mezzanine methods ###  (these use Accessors)
