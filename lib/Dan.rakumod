@@ -531,100 +531,80 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
     ### Splicing ###
 
-    #| get rows as Array of DataSlices 
-    multi method rad {
-        self.[*]
-    }
+    #| reset attributes
+    method reset( :$axis ) {
 
-    #| set rows from Array of DataSlices 
-    multi method rad( @rad ) {
         @!data = [];
-        %!index = %();
-        self.load-from-slices: @rad
+
+        if ! $axis {
+            %!index = %()
+        } else {
+            @!dtypes  = [];
+            %!columns = %()
+        }
     }
 
-    #| get self as Array of Pairs (index => DataSlice) [rows]
-    multi method rap {
-        my @slices = self.[*];
-        self.ix.map({ $_ => @slices[$++] })
+    method get-for-splice( :$axis, :$pair ) {
+        given $axis, $pair {
+            when 0, 0 {
+                self.[*]
+            }
+            when 0, 1 {
+                my @slices = self.[*];
+                self.ix.map({ $_ => @slices[$++] })
+            }
+            when 1, 0 {
+                self.cx.map({self.series($_)}).Array
+            }
+            when 1, 1 {
+                my @series = self.cx.map({self.series($_)}).Array;
+                self.cx.map({ $_ => @series[$++] })
+            }
+        }
     }
 
-    #| set self from Array of Pairs (index => DataSlice) [rows]
-    multi method rap( @rap ) {
-        self.ix:    @rap.map(*.key);
-        self.data = @rap.map(*.value);
+    method set-from-splice( :$axis, :$pair, *@set ) {
+
+        self.reset: :$axis;
+
+        given $axis, $pair {
+            when 0, 0 {
+                self.load-from-slices: @set
+            }
+            when 0, 1 {
+                self.load-from-slices: @set.map(*.value);
+                self.ix: @set.map(*.key)
+            }
+            when 1, 0 {
+                self.load-from-series: @set, @set.first.elems
+            }
+            when 1, 1 {
+                self.load-from-series: @set.map(*.value), @set.first.value.elems;
+                self.cx: @set.map(*.key)
+            }
+        }
     }
 
     #| splice rows as Array of DataSlices or Array of Pairs (index => DataSlice)
     #| viz. https://docs.raku.org/routine/splice
-    method splice-r( DataFrame:D: $start = 0, $elems?, *@replace ) {
-        given @replace {
-            when .first ~~ Pair {
-                my @rap = self.rap;
-                my @res = @rap.splice($start, $elems//*, @replace);
-                self.rap: @rap;
-                @res
-            }
-            default {
-                my @rad = self.rad;
-                my @res = @rad.splice($start, $elems//*, @replace); 
-                self.rad: @rad;
-                @res
-            }
+    method splice( DataFrame:D: $start = 0, $elems?, :ax(:$axis) is copy, *@replace ) {
+
+        given $axis {
+            when ! .so || /row/ { $axis = 0 }
+            when   .so || /col/ { $axis = 1 }
         }
-    }
 
-    #| reset attributes
-    method reset {
-        @!data = [];
-        %!columns = %();
-        @!dtypes = [];
-    }
+        my $pair = @replace.first ~~ Pair ?? 1 !! 0;
 
-    #| get cols as Array of Series
-    multi method cas {
-        self.cx.map({self.series($_)}).Array;
-    }
+        my @wip = self.get-for-splice:  :$axis, :$pair;
+        my @res = @wip.splice: $start, $elems//*, @replace;
+                  self.set-from-splice: :$axis, :$pair, @wip;
 
-    #| set cols from Array of Series
-    multi method cas( @cas ) {
-        self.reset;
-        self.load-from-series: @cas, @cas.first.elems;
-    }
-
-    #| get cols as Array of Pairs (columns => Series)
-    multi method cap {
-        self.cx.map({ $_ => self.cas[$++] })
-    }
-
-    #| set cols from Array of Pairs (columns => Series)
-    multi method cap( @cap ) {
-        self.reset;
-        self.load-from-series: @cap.map(*.value), @cap.first.value.elems;
-        self.cx:    @cap.map(*.key);
-    }
-
-    #| splice cols as Array of values or Array of Pairs
-    #| viz. https://docs.raku.org/routine/splice
-    method splice-c( DataFrame:D: $start = 0, $elems?, *@replace ) {
-        given @replace {
-            when .first ~~ Pair {
-                my @cap = self.cap;
-                my @res = @cap.splice($start, $elems//*, @replace);
-                self.cap: @cap;
-                @res
-            }
-            default {
-                my @cas = self.cas;
-                my @res = @cas.splice($start, $elems//*, @replace); 
-                self.cas: @cas;
-                @res
-            }
-        }
+        @res
     }
 
 #`[[
-#make df wide
+#make df wide iamerejh
     #| set empty data slots to Nan
     method fillna {
         self.aop.grep(! *.value.defined).map({ $_.value = NaN });

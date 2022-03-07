@@ -126,36 +126,44 @@ my \df2 = DataFrame.new([
 ]);
 
 say ~df2; 
-#`[[
+#[[
 # Array of objects (DataSlice|Series) uses object .name 
 # Array of Pairs uses Pair .key for index / columns
 # raku Dan does not support duplicate keys (need an error)
 
+my $mode = 
+#'pop';
+#'array';
+'pair';
+
 #rows
-#say df2.splice-r: *-1 ;    #[[1 2022-01-01 1 3 train foo]]
+my $dfr = df2;
 
-my $ds = df2[1];
-$ds.splice($ds.index<D>,1,7); #same as $ds.splice-r(4,1,7);
+my $ds = $dfr[1];
+$ds.splice($ds.index<D>,1,7); #same as $ds.splice(4,1,7);
 $ds.name = '7';
-#df2.splice-r(2,1,$ds);
 
-df2.splice-r( 1,2,(j => $ds,) );
+$dfr.splice: *-1                            if $mode eq 'pop';    #[[1 2022-01-01 1 3 train foo]]
+$dfr.splice( 2,1,$ds )                      if $mode eq'array';
+$dfr.splice( axis => 'row',1,2,(j => $ds,) ) if $mode eq 'pair';
+
+say ~$dfr;
 #]]
 
 #[[
 #cols
-#df2.splice-c: *-1 ;    #[Dan::Series.new(dtype => Str, name => "F", ... ]
+my $dfc = df2;
 
-my $se = df2.series: <A>;
+my $se = $dfc.series: <A>;
 $se.name = 'X';
 $se.splice(2,1,7);
 
-#df2.splice-c(3,2,$se);
+$dfc.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(dtype => Str, name => "F", ... ]
+$dfc.splice( :ax(1),3,2,$se)                if $mode eq 'array';
+$dfc.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
 
-#df2.splice-c(1,2,(K => $se,) );
-df2.splice-c(:c,1,1,(K => $se,) );
+say ~$dfc;
 #]]
-say ~df2;
 
 
 
