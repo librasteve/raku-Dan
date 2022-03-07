@@ -123,21 +123,6 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         self.data = @aop.map(*.value);
     }
 
-    #| set empty data slots to Nan
-    method fillna {
-        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
-    }
-
-    #| drop index and data when Nan
-    method dropna {
-        self.aop: self.aop.grep(*.value ne NaN);
-    }
-
-    #| drop index and data when empty 
-    method dropem {
-        self.aop: self.aop.grep(*.value.defined).Array;
-    }
-
     #| splice as Array of values or Array of Pairs
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
@@ -154,6 +139,21 @@ role DataSlice does Positional does Iterable is export(:ALL) {
                 @res
             }
         }
+    }
+
+    #| set empty data slots to Nan
+    method fillna {
+        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
+    }
+
+    #| drop index and data when Nan
+    method dropna {
+        self.aop: self.aop.grep(*.value ne NaN);
+    }
+
+    #| drop index and data when empty 
+    method dropem {
+        self.aop: self.aop.grep(*.value.defined).Array;
     }
 
     ### Output Methods ###
@@ -544,7 +544,8 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
-    method get-for-splice( :$axis, :$pair ) {
+    #| get as Array or Array of Pairs - [index|columns =>] DataSlice|Series
+    method get-ap( :$axis, :$pair ) {
         given $axis, $pair {
             when 0, 0 {
                 self.[*]
@@ -563,7 +564,8 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
-    method set-from-splice( :$axis, :$pair, *@set ) {
+    #| set from Array or Array of Pairs - [index|columns =>] DataSlice|Series
+    method set-ap( :$axis, :$pair, *@set ) {
 
         self.reset: :$axis;
 
@@ -585,7 +587,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
-    #| splice rows as Array of DataSlices or Array of Pairs (index => DataSlice)
+    #| splice as Array or Array of Pairs - [index|columns =>] DataSlice|Series
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataFrame:D: $start = 0, $elems?, :ax(:$axis) is copy, *@replace ) {
 
@@ -596,32 +598,18 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         my $pair = @replace.first ~~ Pair ?? 1 !! 0;
 
-        my @wip = self.get-for-splice:  :$axis, :$pair;
+        my @wip = self.get-ap: :$axis, :$pair;
         my @res = @wip.splice: $start, $elems//*, @replace;
-                  self.set-from-splice: :$axis, :$pair, @wip;
+                  self.set-ap: :$axis, :$pair, @wip;
 
         @res
     }
 
-#`[[
-#make df wide iamerejh
-    #| set empty data slots to Nan
-    method fillna {
-        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
-    }
-
-    #| drop index and data when Nan
-    method dropna {
-        self.aop: self.aop.grep(*.value ne NaN);
-    }
-
-    #| drop index and data when empty 
-    method dropem {
-        self.aop: self.aop.grep(*.value.defined).Array;
-    }
-#]]
-
     ### Mezzanine methods ###  (these use Accessors)
+
+    method fillna {
+        self.map(*.map({ $_ //= NaN }).eager);
+    }
 
     method T {
         DataFrame.new( data => ([Z] @.data), index => %.columns, columns => %.index )

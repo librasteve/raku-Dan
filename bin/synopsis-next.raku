@@ -14,19 +14,20 @@ s = Series.new( [rand xx 5], index => <a b c d e>);
 #   -or-
 s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
 
-say ~s; 
-
 #`[[
 s.ix: <b c d>;
 say ~s; 
 
 say s.splice: *-1 ;    #[2]
-s.dropna;
+
 #say s.splice(1,2,3);   #[0 2]
 #s.splice( 1,2,(j => 3,) );
-say ~s; 
 #say s.ix;
+#s.dropna;
+s.fillna;
+say ~s; 
 
+#nb must use splice to assign, delete
 #]]
 
 #`[[[
@@ -126,7 +127,7 @@ my \df2 = DataFrame.new([
 ]);
 
 say ~df2; 
-#[[
+#`[[
 # Array of objects (DataSlice|Series) uses object .name 
 # Array of Pairs uses Pair .key for index / columns
 # raku Dan does not support duplicate keys (need an error)
@@ -137,41 +138,26 @@ my $mode =
 'pair';
 
 #rows
-my $dfr = df2;
-
-my $ds = $dfr[1];
+my $ds = df2[1];
 $ds.splice($ds.index<D>,1,7); #same as $ds.splice(4,1,7);
 $ds.name = '7';
 
-$dfr.splice: *-1                            if $mode eq 'pop';    #[[1 2022-01-01 1 3 train foo]]
-$dfr.splice( 2,1,$ds )                      if $mode eq'array';
-$dfr.splice( axis => 'row',1,2,(j => $ds,) ) if $mode eq 'pair';
+df2.splice: *-1                            if $mode eq 'pop';    #[[1 2022-01-01 1 3 train foo]]
+df2.splice( 2,1,$ds )                      if $mode eq'array';
+df2.splice( axis => 'row',1,2,(j => $ds,) ) if $mode eq 'pair';
 
-say ~$dfr;
-#]]
-
-#[[
 #cols
-my $dfc = df2;
-
-my $se = $dfc.series: <A>;
+my $se = df2.series: <A>;
 $se.name = 'X';
 $se.splice(2,1,7);
 
-$dfc.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(dtype => Str, name => "F", ... ]
-$dfc.splice( :ax(1),3,2,$se)                if $mode eq 'array';
-$dfc.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
+df2.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(dtype => Str, name => "F", ... ]
+df2.splice( :ax(1),3,2,$se)                if $mode eq 'array';
+df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
 
-say ~$dfc;
-#]]
-
-
-
-#`[[
-s.ix: <b c d>;
-#say s.ix;
-
-s.dropna;
+df2[0;0] = Nil;
+df2.fillna;
+say ~df2;
 #]]
 
 #`[[[
