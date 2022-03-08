@@ -74,6 +74,10 @@ df2.B                  df2.duplicated
 
 # helper declarations & functions
 
+#set mark for index/column duplicates
+constant $mark = '⋅'; # unicode Dot Operator U+22C5
+my regex notmark { <-[⋅]> }
+
 #generates default column labels
 constant @alphi = 'A'..∞; 
 
@@ -153,16 +157,16 @@ role DataSlice does Positional does Iterable is export(:ALL) {
     }
 
     # concat
-    method concat( DataSlice:D \right ) {
+    method concat( DataSlice:D $dsr ) {
         self.index.map({ 
-            if right.index{$_.key}:exists {
+            if $dsr.index{$_.key}:exists {
                 warn "duplicate key {$_.key} not permitted" 
             } 
         });
 
         my $start = self.index.elems;
-        my $elems = right.index.elems;
-        my @replace = right.aop;
+        my $elems = $dsr.index.elems;
+        my @replace = $dsr.aop;
 
         self.splice: $start, $elems, @replace;    
         self
@@ -407,7 +411,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
 
     # helper functions
-    method load-from-series( @series, $row-count ) {
+    method load-from-series( :$row-count, *@series ) {
         loop ( my $i=0; $i < @series; $i++ ) {
 
             @!dtypes.push: @series[$i].dtype;
@@ -461,7 +465,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
                 # clear and load data
                 @!data = [];
-                $.load-from-series: @series, +@index;
+                $.load-from-series: row-count => +@index, |@series;
 
                 # make index Hash (row label => pos) 
                 my $j = 0;
@@ -481,7 +485,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
                 # clear and load data (and columns)
                 @!data = [];
-                $.load-from-series: @series, $row-count;
+                $.load-from-series: :$row-count, |@series;
 
                 # make index Hash
                 %!index = @series.first.index;
@@ -590,10 +594,10 @@ role DataFrame does Positional does Iterable is export(:ALL) {
                 self.ix: @set.map(*.key)
             }
             when 1, 0 {                         # col - array
-                self.load-from-series: @set, @set.first.elems
+                self.load-from-series: row-count => @set.first.elems, |@set
             }
             when 1, 1 {                         # col - aops
-                self.load-from-series: @set.map(*.value), @set.first.value.elems;
+                self.load-from-series: row-count => @set.first.value.elems, |@set.map(*.value);
                 self.cx: @set.map(*.key)
             }
         }
@@ -613,7 +617,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         $axis = clean-axis(:$axis);
 
         my $pair = @replace.first ~~ Pair ?? 1 !! 0;
-
         my @wip = self.get-ap: :$axis, :$pair;
         my @res = @wip.splice: $start, $elems//*, @replace;
                   self.set-ap: :$axis, :$pair, @wip;
@@ -622,24 +625,85 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
 
     # concat
-    method concat( DataFrame:D \right, :ax(:$axis) is copy, 
-                     :$join = 'outer', :ii(:$ignore-index) ) {
+    method concat( DataFrame:D $dfr, :ax(:$axis) is copy,           #TODO - refactor for speed?   
+                     :jn(:$join) = 'outer', :ii(:$ignore-index) ) {
 
         $axis = clean-axis(:$axis);
 
         #axis dependent
         my $start = self.index.elems;
-        my $elems = right.index.elems;
-
-        my @replace = right.get-ap( :$axis, pair => 1 );
+        my $elems = $dfr.index.elems;
 
         if ! $axis {            # row
-            
-            my $mark = '⋅'; # unicode Dot Operator U+22C5
-            my regex notmark { <-[⋅]> }
 
+            # take stock of cols
+            my @left   = self.cx;
+            my @right  = $dfr.cx;
+            my @inner  = @left.grep(  * ∈ @right );
+            my @l-only = @left.grep(  * ∉ @inner );
+            my @r-only = @right.grep( * ∉ @inner );
+            my @outer  = |@l-only, |@r-only;
+
+            # helper functions for adjusting columns
+            sub add-ronly-to-left {
+                my $l-empty = Series.new( NaN, index => [self.ix] );
+
+                for @r-only -> $name {
+                    self.splice: :ax, *, *, ($name => $l-empty);
+                }
+            }
+            sub add-lonly-to-right {
+                my $r-empty = Series.new( NaN, index => [$dfr.ix] );
+
+                for @l-only -> $name {
+                    $dfr.splice: :ax, *, *, ($name => $r-empty);
+                }
+            }
+            sub drop-outers-from-left {
+                for @l-only -> $name {
+                    self.splice: :ax, self.columns{$name}, 1
+                }
+            }
+            sub drop-outers-from-right {
+                for @r-only -> $name {
+                    $dfr.splice: :ax, $dfr.columns{$name}, 1
+                }
+            }
+
+            # re-arrange cols 
+            given $join {
+                when /o/ {          #outer
+                    add-ronly-to-left;
+                    add-lonly-to-right;
+                }
+                when /i/ {          #inner
+                    drop-outers-from-left;
+                    drop-outers-from-right;
+                }
+                when /l/ {          #left
+                    add-lonly-to-right;
+                    drop-outers-from-right;
+                }
+                when /r/ {          #right
+                    add-ronly-to-left;
+                    drop-outers-from-left;
+                }
+            }
+            
+            # align right cols to left
+            for 0..^+self.cx -> $i {
+                if self.cx[$i] ne $dfr.cx[$i] {
+                    say $i;
+                    my @mover = $dfr.splice: :ax, ($dfr.columns{self.cx[$i]}), 1; 
+                    $dfr.splice: :ax, $i, 0, @mover; 
+                }
+            }
+
+            # handle row name duplicates
             my $dupes = ().BagHash;
             self.ix.map({ $_ ~~ / ^ (<notmark>*) /; $dupes.add(~$0) }); 
+
+            my @replace = $dfr.get-ap( :$axis, pair => 1 );
 
             @replace.map({ 
                 if self.index{$_.key}:exists {
@@ -667,7 +731,8 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         }
     }
 
-    ### Mezzanine methods ###  (these use Accessors)
+    ### Mezzanine methods ###  
+    # (these use Accessors) #
 
     method fillna {
         self.map(*.map({ $_ //= NaN }).eager);

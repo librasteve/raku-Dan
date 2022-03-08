@@ -161,6 +161,7 @@ $se.splice(2,1,7);
 df2.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(dtype => Str, name => "F", ... ]
 df2.splice( :ax(1),3,2,$se)                if $mode eq 'array';
 df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
+ #iamerejh ... for row concat, need to splice-sort the right col
 
 df2[0;0] = Nil;
 df2.fillna;
@@ -172,26 +173,45 @@ my \dfa = DataFrame.new(
         [['a', 1], ['b', 2]],
         columns => <letter number>,
 );
+say ~dfa;
+#[[[
 my \dfb = DataFrame.new(
         [['c', 3], ['d', 4]],
         columns => <letter number>,
 );
-#say ~dfa.concat: dfb, :ii;
+#say ~dfb;
+#]]]
+
+#`[[[ #switch cols
+my \dfb = DataFrame.new(
+        [['c', 3], ['d', 4]],
+        columns => <number letter>,
+);
+say ~dfb;
+my @se = dfb.splice(:ax, dfb.columns<letter>, 1);
+dfb.splice(:ax,0,0,@se);                #note :ax and 0,0
+say ~dfb;
+#]]]
+
+#`[[[
+say ~dfb;
 dfa.concat: dfb;
+#dfa.concat: dfa, :ii;
 say ~dfa;
+#]]]
 
-dfa.concat: dfb;
-say ~dfa;
+my \dfc = DataFrame.new(
+        [['c', 3, 'cat'], ['d', 4, 'dog']],
+        #columns => <animal letter number>,
+        columns => <letter number animal>,
+);
+say ~dfc;
 
-dfa.concat: dfa, :ii;
-say ~dfa;
+#dfa.concat: dfc, join => 'inner';
+dfa.concat: dfc, :jn<r>;
+#dfa.concat: dfc;
+say ~ dfa;
 
-die;
-dd dfa.ix;
-
-my \dfc = dfa;
-say ~dfc.concat: dfa, :ii;
-#say ~dfa.concat: dfc, :ii;
 #]]
 
 #`[[[
