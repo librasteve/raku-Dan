@@ -200,6 +200,7 @@ dfa.concat: dfb;
 say ~dfa;
 #]]]
 
+#`[[[
 my \dfc = DataFrame.new(
         [['c', 3, 'cat'], ['d', 4, 'dog']],
         #columns => <animal letter number>,
@@ -211,6 +212,24 @@ say ~dfc;
 dfa.concat: dfc, :jn<r>;
 #dfa.concat: dfc;
 say ~ dfa;
+#]]]
+
+#`[[[
+#sort cols
+for dfc.columns.sort.map(*.value) {
+    my @mover = dfc.splice: :ax, $_;            #splice out mover Series
+    dfc.splice: :ax, $++, 0, @mover;            #splice back in sequence
+}
+say ~dfc;
+#]]]
+
+my \dfd = DataFrame.new([['bird', 'polly'], ['monkey', 'george']],
+                          columns=> <animal name>                );
+say ~dfd;
+
+dfa.concat: dfd, axis => 1;
+dd dfa;
+say ~dfa;
 
 #]]
 

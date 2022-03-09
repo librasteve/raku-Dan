@@ -28,8 +28,8 @@ v1 Backlog
 -- fillna, dropna, dropem
 ^^^ done
 - Combiners 
--- combine
--- concat (for join, merge)
+-- concat (for join [outer|inner|left|right], merge)
+-- combine?
 - Shape (just simple)
 - Input/Output (just csv)
 
@@ -46,6 +46,8 @@ v2 Backlog
 -- .map ok (regex example)
 - Merge & Join?
 -- .concat ok
+- Column sort
+-- splice ok (example?)
 - Exceptions
 - Stats
 - Histogramming
@@ -630,11 +632,11 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         $axis = clean-axis(:$axis);
 
-        #axis dependent
-        my $start = self.index.elems;
-        my $elems = $dfr.index.elems;
+        if ! $axis {            # row-wise
 
-        if ! $axis {            # row
+            # set extent of main slice 
+            my $start = self.index.elems;
+            my $elems = $dfr.index.elems;
 
             # take stock of cols
             my @left   = self.cx;
@@ -649,14 +651,14 @@ role DataFrame does Positional does Iterable is export(:ALL) {
                 my $l-empty = Series.new( NaN, index => [self.ix] );
 
                 for @r-only -> $name {
-                    self.splice: :ax, *, *, ($name => $l-empty);
+                    self.splice: :ax, *, *, ($name => $l-empty)
                 }
             }
             sub add-lonly-to-right {
                 my $r-empty = Series.new( NaN, index => [$dfr.ix] );
 
                 for @l-only -> $name {
-                    $dfr.splice: :ax, *, *, ($name => $r-empty);
+                    $dfr.splice: :ax, *, *, ($name => $r-empty)
                 }
             }
             sub drop-outers-from-left {
@@ -693,7 +695,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
             # align right cols to left
             for 0..^+self.cx -> $i {
                 if self.cx[$i] ne $dfr.cx[$i] {
-                    say $i;
                     my @mover = $dfr.splice: :ax, ($dfr.columns{self.cx[$i]}), 1; 
                     $dfr.splice: :ax, $i, 0, @mover; 
                 }
@@ -728,6 +729,104 @@ role DataFrame does Positional does Iterable is export(:ALL) {
             } 
 
             self
+        } else {        #column-wise
+
+            # set extent of main slice 
+            my $start = self.columns.elems;
+            my $elems = $dfr.columns.elems;
+
+            # take stock of rows 
+            my @left   = self.ix;
+            my @right  = $dfr.ix;
+            my @inner  = @left.grep(  * ∈ @right );
+            my @l-only = @left.grep(  * ∉ @inner );
+            my @r-only = @right.grep( * ∉ @inner );
+            my @outer  = |@l-only, |@r-only;
+
+            # helper functions for adjusting rows 
+            sub add-ronly-to-left {
+                my $l-empty = DataSlice.new( data => [NaN xx self.cx.elems], index => [self.cx] );
+
+                for @r-only -> $name {
+                    self.splice: *, *, ($name => $l-empty)
+                }
+            }
+            sub add-lonly-to-right {
+                my $r-empty = DataSlice.new( data => [NaN xx $dfr.cx.elems], index => [$dfr.cx] );
+
+                for @l-only -> $name {
+                    $dfr.splice: *, *, ($name => $r-empty)
+                }
+            }
+            sub drop-outers-from-left {
+                for @l-only -> $name {
+                    self.splice: self.index{$name}, 1
+                }
+            }
+            sub drop-outers-from-right {
+                for @r-only -> $name {
+                    $dfr.splice: $dfr.index{$name}, 1
+                }
+            }
+
+            # re-arrange cols 
+            given $join {
+                when /o/ {          #outer
+                    add-ronly-to-left;
+                    add-lonly-to-right;
+                }
+                when /i/ {          #inner
+                    drop-outers-from-left;
+                    drop-outers-from-right;
+                }
+                when /l/ {          #left
+                    add-lonly-to-right;
+                    drop-outers-from-right;
+                }
+                when /r/ {          #right
+                    add-ronly-to-left;
+                    drop-outers-from-left;
+                }
+            }
+            
+            # align right rows to left
+            for 0..^+self.ix -> $i {
+                if self.ix[$i] ne $dfr.ix[$i] {
+                    my @mover = $dfr.splice: ($dfr.index{self.ix[$i]}), 1; 
+                    $dfr.splice: $i, 0, @mover; 
+                }
+            }
+
+            # handle row name duplicates
+            my $dupes = ().BagHash;
+            self.cx.map({ $_ ~~ / ^ (<notmark>*) /; $dupes.add(~$0) }); 
+
+            my @replace = $dfr.get-ap( :$axis, pair => 1 );
+
+            @replace.map({ 
+                if self.columns{$_.key}:exists {
+                    #warn "duplicate key {$_.key}";
+
+                    $_.key ~~ / ^ (<notmark>*) /;
+                    my $b-key = ~$0;
+                    my $n-key = $b-key ~ $mark ~ $dupes{$b-key};
+
+                    $_ = $n-key => $_.value; 
+                    $dupes{$b-key}++;
+                } 
+            });
+
+            self.splice: :ax, $start, $elems, @replace;    
+
+            if $ignore-index {
+                my @new-cx = self.cx;
+                self.columns = %();
+                my $i = 0;
+                @new-cx.map({ self.columns{~$i} = $i++ }) 
+            } 
+
+            self
+
         }
     }
 
