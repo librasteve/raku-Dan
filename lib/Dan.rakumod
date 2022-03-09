@@ -76,11 +76,11 @@ df2.B                  df2.duplicated
 
 # helper declarations & functions
 
-#set mark for index/column duplicates
+# set mark for index/column duplicates
 constant $mark = '⋅'; # unicode Dot Operator U+22C5
 my regex notmark { <-[⋅]> }
 
-#generates default column labels
+# generates default column labels
 constant @alphi = 'A'..∞; 
 
 # sorts Hash by value, returns keys (poor woman's Ordered Hash)
@@ -514,8 +514,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
                 }
                 if ! %!columns {
                     @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} ).eager;
-                    #eager @alphi[0..^@!data.first.elems].map( {%!columns{$_} = $++} );
-                    #%!columns  #<== have to "touch" %!columns to avoid empty hash
                 }
                 #no-op
             } 
@@ -776,7 +774,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         });
 
         # do the main splice
-        self.splice: $start, $elems, @replace;    
+        self.splice: :$axis, $start, $elems, @replace;    
 
         # handle ignore-index
         if $ignore-index {
@@ -842,6 +840,10 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
 
     ### Output methods ###
+
+    method shape {
+        self.ix.elems, self.cx.elems
+    }
 
     method dtypes {
         my @labels = self.columns.&sbv;

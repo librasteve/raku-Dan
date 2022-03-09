@@ -228,8 +228,8 @@ my \dfd = DataFrame.new([['bird', 'polly'], ['monkey', 'george']],
 say ~dfd;
 
 dfa.concat: dfd, axis => 1;
-dd dfa;
 say ~dfa;
+say dfa.shape;
 
 #]]
 
