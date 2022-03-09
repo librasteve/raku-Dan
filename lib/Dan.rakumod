@@ -26,15 +26,15 @@ v1 Backlog
 -- splice (for drop, assign, append, push, pop, shift, unshift)
 - Missing data
 -- fillna, dropna, dropem
-^^^ done
-- Combiners 
+- Concat 
 -- concat (for join [outer|inner|left|right], merge)
--- combine?
 - Shape (just simple)
-- Input/Output (just csv)
+^^^ done
+-- combine?
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
+- Input/Output (just csv)
 - Set style ops
 - Apply?
 -- .map ok 

@@ -229,7 +229,22 @@ say ~dfd;
 
 dfa.concat: dfd, axis => 1;
 say ~dfa;
+
 say dfa.shape;
+
+#combine
+
+#get operand Series and leaving originals in place
+my ($a, $b)  = <animal name>.map({ dfd.series($_) }); 
+
+#or splice them out (splices return arrays, we just want the first item)
+#my ($a, $b)  = <animal name>.map({ dfd.splice(:ax, dfd.columns{$_}, 1).first }); 
+
+#use hyper operators to combine as new Series, and splice back in as named pair 
+my $combo = Series.new( $a >>~<< $b );
+dfd.splice: :ax, 0, 0, (:$combo);            
+
+say ~dfd;
 
 #]]
 
