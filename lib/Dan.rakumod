@@ -30,12 +30,14 @@ v1 Backlog
 -- concat (for join [outer|inner|left|right], merge)
 - Shape (just simple)
 ^^^ done
--- combine?
 
 v2 Backlog 
 (much of this is test / synopsis examples / new mezzanine methods)
-- Input/Output (just csv)
 - Set style ops
+-- expose series eg. df.A, etc
+-- see notes
+- Combine
+-- .splice ok
 - Apply?
 -- .map ok 
 - Duplicate labels?
@@ -47,7 +49,7 @@ v2 Backlog
 - Merge & Join?
 -- .concat ok
 - Column sort
--- splice ok (example?)
+-- splice ok
 - Exceptions
 - Stats
 - Histogramming

@@ -16,25 +16,25 @@ s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
 
 #`[[
 s.ix: <b c d>;
-say ~s; 
 
-say s.splice: *-1 ;    #[2]
-
-#say s.splice(1,2,3);   #[0 2]
-#s.splice( 1,2,(j => 3,) );
-#say s.ix;
-#s.dropna;
+s.splice: *-1;
+s.splice(1,2,3);
+s.splice( 1,2,(j => Nil) );
 s.fillna;
+s.dropna;
 say ~s; 
+say s.ix[1];
 
 #nb must use splice to assign, delete
 #]]
 
 #`[[ concat
-say ~s.concat: s;
+#say ~s.concat: s;
 
+s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
 say my \t = Series.new( [f=>1, e=>0, d=>2] );
-say ~s.concat: t;
+say ~(s.concat: t).ix[3];
+die;
 #]]
 
 #`[[[
@@ -134,15 +134,15 @@ my \df2 = DataFrame.new([
 ]);
 #say ~df2; 
 
-#`[[
+#[[
 # Array of objects (DataSlice|Series) uses object .name 
 # Array of Pairs uses Pair .key for index / columns
 # raku Dan does not support duplicate keys (need an error)
 
 my $mode = 
-#'pop';
+'pop';
 #'array';
-'pair';
+#'pair';
 
 #rows
 my $ds = df2[1];
@@ -152,6 +152,7 @@ $ds.name = '7';
 df2.splice: *-1                            if $mode eq 'pop';    #[[1 2022-01-01 1 3 train foo]]
 df2.splice( 2,1,$ds )                      if $mode eq'array';
 df2.splice( axis => 'row',1,2,(j => $ds,) ) if $mode eq 'pair';
+say ~df2;
 
 #cols
 my $se = df2.series: <A>;
@@ -159,14 +160,15 @@ $se.name = 'X';
 $se.splice(2,1,7);
 
 df2.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(dtype => Str, name => "F", ... ]
+#iamerejh (pop tests)
 df2.splice( :ax(1),3,2,$se)                if $mode eq 'array';
 df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
- #iamerejh ... for row concat, need to splice-sort the right col
 
 df2[0;0] = Nil;
 df2.fillna;
 say ~df2;
 #]]
+die;
 
 #[[
 my \dfa = DataFrame.new(

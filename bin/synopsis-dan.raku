@@ -29,6 +29,23 @@ say [+] s;          #3
 say s >>+>> 2;      #(3 2 4)
 say s >>+<< s;      #(2 0 4)
 
+# Updates
+
+# splice is the core method for all add, drop,
+# move, delete, update & insert operations 
+# viz. https://docs.raku.org/routine/splice
+s.ix: <b c d>;      #re-index
+s.splice: *-1;      #pop
+s.splice(1,2,3);      #$start, $elems, *@replace
+s.splice(1,2,(j=>3)); #update index & value
+s.fillna;           #fill NaN if undef 
+s.dropna;           #drop NaN elements 
+
+# concat is the core method for all join,
+# merge & combine operations
+my \t = Series.new( [f=>1, e=>0, d=>2] );
+s.concat: t;        #concatenate
+
 say "=============================================";
 
 ### DataFrames ###
@@ -68,7 +85,7 @@ say "=============================================";
 say df.map(*.map(*+2));
 say [+] df[*][1];
 say [+] df[*][*];
-say ~df.T;                  #Transpose
+say ~df.T;                  # Transpose
 
 # Hyper
 say df >>+>> 2;
@@ -94,7 +111,7 @@ say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 
 # Grep
 # global replace binary filter
-# works on data "in place" - so make a copy first if you need to keep all the data
+# works on data "in place" - make a copy first if you need to keep it 
 say ~df.grep( { .[1] < 0.5 } ); # grep by 2nd column 
 say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
 
@@ -116,4 +133,52 @@ say df2.index;
 say df2.columns;
 say df2.dtypes;
 say "=============================================";
+
+### DataFrame Updates ###
+
+df2.ix: <a b c d>;      # re-index
+df2.cx: <a b c d e f>;  # re-label
+
+# splice is the core method for all add, drop,
+# move, delete, update & insert operations 
+# viz. https://docs.raku.org/routine/splice
+# 
+# named param 'axis' indicates if row(0) or col(1)
+# if omitted, default=0 (row) / 'ax' is an alias
+# use a Pair literal like :!axis, :axis(1) or :ax 
+
+# splice on rows
+my $ds := df2[1];                       #make a replacement DataSlice 
+$ds.splice($ds.index<D>,1,7);
+
+$ds.name = 'j';                         #new index from DataSlice name
+df2.splice( :!axis, 2, 1, $ds );        #$start, $elems, *@replace
+#-or-
+df2.splice( 1, 2, (j => $ds) );         #new index & value from Pair
+
+# splice on cols 
+my $se = df2.series: <A>;               #make a replacement Series 
+$se.splice(2,1,7);
+
+$se.name = 'K';                         #new column label from Series name 
+df2.splice( (axis => 1), 3, 2, $se);    #$start, $elems, *@replace
+#-or-
+df2.splice( :ax, 1, 2, (K => $se) );    #new column label & value from Pair
+
+
+
+
+
+
+
+
+# concat is the core method for all join,
+# merge & combine operations
+my \t = Series.new( [f=>1, e=>0, d=>2] );
+s.concat: t;        #concatenate
+
+
+
+
+
 
