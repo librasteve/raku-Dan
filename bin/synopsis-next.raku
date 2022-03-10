@@ -140,9 +140,9 @@ my \df2 = DataFrame.new([
 # raku Dan does not support duplicate keys (need an error)
 
 my $mode = 
-'pop';
+#pop';
 #'array';
-#'pair';
+'pair';
 
 #rows
 my $ds = df2[1];
@@ -164,8 +164,8 @@ df2.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(
 df2.splice( :ax(1),3,2,$se)                if $mode eq 'array';
 df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
 
-df2[0;0] = Nil;
-df2.fillna;
+#df2[0;0] = Nil;
+#df2.fillna;
 say ~df2;
 #]]
 die;

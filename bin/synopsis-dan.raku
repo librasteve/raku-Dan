@@ -147,24 +147,29 @@ df2.cx: <a b c d e f>;  # re-label
 # if omitted, default=0 (row) / 'ax' is an alias
 # use a Pair literal like :!axis, :axis(1) or :ax 
 
-# splice on rows
-my $ds := df2[1];                       #make a replacement DataSlice 
+# prep DataSlice 
+my $ds := df2[1];                       
 $ds.splice($ds.index<D>,1,7);
 
-$ds.name = 'j';                         #new index from DataSlice name
+# splice rows
+$ds.name = 'j';                         #new index from ds.name
 df2.splice( :!axis, 2, 1, $ds );        #$start, $elems, *@replace
 #-or-
-df2.splice( 1, 2, (j => $ds) );         #new index & value from Pair
+df2.splice( 1, 2, (j => $ds) );         #new index from Pair(s)
 
-# splice on cols 
-my $se = df2.series: <A>;               #make a replacement Series 
+# prep Series 
+my $se = df2.series: <A>;               
 $se.splice(2,1,7);
 
-$se.name = 'K';                         #new column label from Series name 
+# splice on cols 
+$se.name = 'K';                         #new column label from se.name 
 df2.splice( (axis => 1), 3, 2, $se);    #$start, $elems, *@replace
 #-or-
-df2.splice( :ax, 1, 2, (K => $se) );    #new column label & value from Pair
+df2.splice( :ax, 1, 2, (K => $se) );    #new column label from Pairs
 
+say "=============================================";
+
+### DataFrame Concatenation ###
 
 
 

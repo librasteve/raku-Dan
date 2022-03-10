@@ -45,15 +45,12 @@ my $df2 = DataFrame.new([
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
-my $df3 = $df2;
-my $df4 = $df2;
-my $df5 = $df2;
 
-$df5.ix: <a b c d>;
-is $df5.index, "a\t0\nb\t1\nc\t2\nd\t3",                                            'df.ix';
+$df2.ix: <a b c d>;
+is $df2.index, "a\t0\nb\t1\nc\t2\nd\t3",                                            'df.ix';
 
-$df5.cx: <a b c d e f>;
-is $df5.dtypes, "a => Rat\nb => Date\nc => Num\nd => Int\ne => Str\nf => Str",      'df.cx';
+$df2.cx: <a b c d e f>;
+is $df2.dtypes, "a => Rat\nb => Date\nc => Num\nd => Int\ne => Str\nf => Str",      'df.cx';
 
 $df2.splice: *-1; 
 ok $df2.ix.elems == 3,                                                              'df.pop [row]';
@@ -61,14 +58,50 @@ ok $df2.ix.elems == 3,                                                          
 $df2.splice: :ax(1), *-1;
 ok $df2.cx.elems == 5,                                                              'df.pop [col]';
 
-die;
+my $df3 = DataFrame.new([
+        A => 1.0,
+        B => Date.new("2022-01-01"),
+        C => Series.new(1, index => [0..^4], dtype => Num),
+        D => [3 xx 4],
+        E => Categorical.new(<test train test train>),
+        F => "foo",
+]);
+
 my $ds = $df3[1];
-$ds.splice(4,1,7);
+$ds.splice(3,1,7);
 $ds.name = '7';
 
 my $se = $df3.series: <A>;
 $se.splice(2,1,7);
 $se.name = 'X';
+
+$df3.splice( 2,1,$ds );
+ok $df3[2]<D> == 7,                                                                 '.df.splice array [row]';
+
+$df3.splice( :ax(1),3,2,$se);
+ok $df3[2]<X> == 7,                                                                 '.df.splice array [col]';
+
+my $df4 = DataFrame.new([
+        A => 1.0,
+        B => Date.new("2022-01-01"),
+        C => Series.new(1, index => [0..^4], dtype => Num),
+        D => [3 xx 4],
+        E => Categorical.new(<test train test train>),
+        F => "foo",
+]);
+
+$df4.splice( axis => 'row',1,2,(j => $ds,) );
+ok $df4<j><D> == 7,                                                                 '.df.splice pair [row]';
+
+$df4.splice( :ax(1),3,2,$se);
+ok $df4<j><X> == 1,                                                                 '.df.splice pair [col]';
+
+$df4[0;0] = Nil;
+$df4.fillna;
+is $df4[0;0], "NaN",                                                                '.df.fillna';
+
+die;
+
 
 
 
