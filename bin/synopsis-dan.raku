@@ -75,7 +75,7 @@ say ~df[0..*-2][1..*-1];    #2d DataFrame
 
 # Taking a row slice makes an Array of DataSlices
 # the ^ postfix converts them into a new DataFrame
-say ~df{dates[0..1]}^;      
+say ~df{dates[0..1]} ^;      
 
 say "=============================================";
 
@@ -98,6 +98,7 @@ say ~df[(*-3..*-1)]^;       # tail
 # Describe
 say ~df[*]<A>.describe;
 say ~df.describe;
+say ~df.shape;
 
 # Sort
 #viz. https://docs.raku.org/routine/sort#(List)_routine_sort
@@ -240,13 +241,27 @@ say "=============================================";
 
 ### Column Operations ###
 
-# btw you can use splice to switch cols like so,
+# switch cols
 my @se = dfb.splice(:ax, dfb.columns<letter>, 1);
-dfb.splice(:ax,0,0,@se);        #note :ax and 0,0
+dfb.splice(:ax,0,0,@se);                    #note :ax and 0,0
 
+# sort cols
+for dfc.columns.sort.map(*.value) {
+    my @mover = dfc.splice: :ax, $_;        #splice out mover Series
+    dfc.splice: :ax, $++, 0, @mover;        #splice back in sequence
+}
 
+# combine two cols
 
+#get operand Series and leaving originals in place
+my ($a, $b)  = <animal name>.map({ dfd.series($_) });
 
+#or splice them out (splices return arrays, we just want the first item)
+my ($a, $b)  = <animal name>.map({ dfd.splice(:ax, dfd.columns{$_}, 1).first }); 
 
+#use hyper operators to combine as new Series, and splice back in as named pair 
+my $combo = Series.new( $a >>~<< $b );
+dfd.splice: :ax, 0, 0, (:$combo);
 
+say "=============================================";
 

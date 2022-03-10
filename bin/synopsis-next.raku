@@ -201,7 +201,7 @@ dfb.splice(:ax,0,0,@se);                #note :ax and 0,0
 say ~dfb;
 #]]]
 
-#[[[
+#`[[[
 my \dfc = DataFrame.new(
         [['c', 3, 'cat'], ['d', 4, 'dog']],
         columns => <letter number animal>,

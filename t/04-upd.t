@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-#plan 25;
+plan 22;
 
 use Dan :ALL;
 
@@ -76,10 +76,10 @@ $se.splice(2,1,7);
 $se.name = 'X';
 
 $df3.splice( 2,1,$ds );
-ok $df3[2]<D> == 7,                                                                 '.df.splice array [row]';
+ok $df3[2]<D> == 7,                                                                 'df.splice array [row]';
 
 $df3.splice( :ax(1),3,2,$se);
-ok $df3[2]<X> == 7,                                                                 '.df.splice array [col]';
+ok $df3[2]<X> == 7,                                                                 'df.splice array [col]';
 
 my $df4 = DataFrame.new([
         A => 1.0,
@@ -91,14 +91,14 @@ my $df4 = DataFrame.new([
 ]);
 
 $df4.splice( axis => 'row',1,2,(j => $ds,) );
-ok $df4<j><D> == 7,                                                                 '.df.splice pair [row]';
+ok $df4<j><D> == 7,                                                                 'df.splice pair [row]';
 
 $df4.splice( :ax(1),3,2,$se);
-ok $df4<j><X> == 1,                                                                 '.df.splice pair [col]';
+ok $df4<j><X> == 1,                                                                 'df.splice pair [col]';
 
 $df4[0;0] = Nil;
 $df4.fillna;
-is $df4[0;0], "NaN",                                                                '.df.fillna';
+is $df4[0;0], "NaN",                                                                'df.fillna';
 
 my \dfa = DataFrame.new(
         [['a', 1], ['b', 2]],
@@ -110,25 +110,38 @@ my \dfb = DataFrame.new(
 );
 
 dfa.concat: dfb;
-ok dfa[2;1] == 3,                                                                   '.df.concat [row]';
-ok dfa.ix[3] eq '1⋅1',                                                              '.df.concat dupes';
+ok dfa[2;1] == 3,                                                                   'df.concat [row]';
+ok dfa.ix[3] eq '1⋅1',                                                              'df.concat dupes';
 
 dfa.concat: dfa, :ii;
-ok dfa.ix[7] == 7,                                                                  '.df.concat ii';
+ok dfa.ix[7] == 7,                                                                  'df.concat ii';
 
 my \dfc = DataFrame.new(
         [['c', 3, 'cat'], ['d', 4, 'dog']],
         columns => <letter number animal>,
 );
-#iamerejh 
+my \dfa2 = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
 
+dfa2.concat: dfc;
+is dfa2[0;2], "NaN",                                                                'df.concat [outer]';
 
+my \dfa3 = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+dfa3.concat: dfc, join => 'inner';
+ok dfa3.cx.elems == 2,                                                              'df.concat [inner]';
 
-die;
+my \dfa4 = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+my \dfd = DataFrame.new([['bird', 'polly'], ['monkey', 'george']],
+                          columns=> <animal name>                );
+dfa4.concat: dfd, axis => 1;
+is dfa4[1;2], "monkey",                                                               'df.concat [col]';
 
-
-
-
-
-
-done-testing;
+#done-testing;

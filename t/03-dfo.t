@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 25;
+plan 26;
 
 use Dan :ALL;
 
@@ -59,5 +59,7 @@ my \df2 = DataFrame.new([
 ]);
 ok df2.columns.elems == 6,                                                              '.columns';
 is df2.dtypes, "A => Rat\nB => Date\nC => Num\nD => Int\nE => Str\nF => Str",           '.dtypes';
+
+is df2.shape, "4 6",                                                                  '.shape';
 
 #done-testing;
