@@ -706,19 +706,19 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         # re-arrange left and right 
         given $join {
-            when /o/ {          #outer
+            when /^o/ {          #outer
                 add-ronly-to-left;
                 add-lonly-to-right;
             }
-            when /i/ {          #inner
+            when /^i/ {          #inner
                 drop-outers-from-left;
                 drop-outers-from-right;
             }
-            when /l/ {          #left
+            when /^l/ {          #left
                 add-lonly-to-right;
                 drop-outers-from-right;
             }
-            when /r/ {          #right
+            when /^r/ {          #right
                 add-ronly-to-left;
                 drop-outers-from-left;
             }
@@ -780,10 +780,15 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         # handle ignore-index
         if $ignore-index {
-            my @new-main = self.ix;
-            self.index = %();
-            my $i = 0;
-            @new-main.map({ %new-main{~$i} = $i++ }) 
+            if ! $axis {
+                my $size = self.ix.elems;
+                self.index = %();
+                self.index{~$_} = $_ for 0..^$size
+            } else {
+                my $size = self.cx.elems;
+                self.columns = %();
+                self.columns{~$_} = $_ for 0..^$size
+            }
         } 
 
         self

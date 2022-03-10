@@ -100,6 +100,30 @@ $df4[0;0] = Nil;
 $df4.fillna;
 is $df4[0;0], "NaN",                                                                '.df.fillna';
 
+my \dfa = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+my \dfb = DataFrame.new(
+        [['c', 3], ['d', 4]],
+        columns => <letter number>,
+);
+
+dfa.concat: dfb;
+ok dfa[2;1] == 3,                                                                   '.df.concat [row]';
+ok dfa.ix[3] eq '1⋅1',                                                              '.df.concat dupes';
+
+dfa.concat: dfa, :ii;
+ok dfa.ix[7] == 7,                                                                  '.df.concat ii';
+
+my \dfc = DataFrame.new(
+        [['c', 3, 'cat'], ['d', 4, 'dog']],
+        columns => <letter number animal>,
+);
+#iamerejh 
+
+
+
 die;
 
 

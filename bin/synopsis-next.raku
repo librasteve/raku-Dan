@@ -134,7 +134,7 @@ my \df2 = DataFrame.new([
 ]);
 #say ~df2; 
 
-#[[
+#`[[
 # Array of objects (DataSlice|Series) uses object .name 
 # Array of Pairs uses Pair .key for index / columns
 # raku Dan does not support duplicate keys (need an error)
@@ -164,11 +164,10 @@ df2.splice: :ax(1), *-1                    if $mode eq 'pop'; #[Dan::Series.new(
 df2.splice( :ax(1),3,2,$se)                if $mode eq 'array';
 df2.splice( :ax<column>,1,2,(K => $se,) )  if $mode eq 'pair';
 
-#df2[0;0] = Nil;
-#df2.fillna;
+df2[0;0] = Nil;
+df2.fillna;
 say ~df2;
 #]]
-die;
 
 #[[
 my \dfa = DataFrame.new(
@@ -184,6 +183,13 @@ my \dfb = DataFrame.new(
 #say ~dfb;
 #]]]
 
+#`[[[
+say ~dfb;
+dfa.concat: dfb;
+#dfa.concat: dfa, :ii;
+say ~dfa;
+#]]]
+
 #`[[[ #switch cols
 my \dfb = DataFrame.new(
         [['c', 3], ['d', 4]],
@@ -195,19 +201,12 @@ dfb.splice(:ax,0,0,@se);                #note :ax and 0,0
 say ~dfb;
 #]]]
 
-#`[[[
-say ~dfb;
-dfa.concat: dfb;
-#dfa.concat: dfa, :ii;
-say ~dfa;
-#]]]
-
-#`[[[
+#[[[
 my \dfc = DataFrame.new(
         [['c', 3, 'cat'], ['d', 4, 'dog']],
-        #columns => <animal letter number>,
         columns => <letter number animal>,
 );
+        #columns => <animal letter number>,
 say ~dfc;
 
 #dfa.concat: dfc, join => 'inner';
@@ -216,6 +215,7 @@ dfa.concat: dfc, :jn<r>;
 say ~ dfa;
 #]]]
 
+die;
 #`[[[
 #sort cols
 for dfc.columns.sort.map(*.value) {

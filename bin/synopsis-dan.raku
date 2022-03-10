@@ -171,16 +171,79 @@ say "=============================================";
 
 ### DataFrame Concatenation ###
 
-
-
-
-
-
-
 # concat is the core method for all join,
 # merge & combine operations
-my \t = Series.new( [f=>1, e=>0, d=>2] );
-s.concat: t;        #concatenate
+my \dfa = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+
+my \dfb = DataFrame.new(
+        [['c', 3], ['d', 4]],
+        columns => <letter number>,
+);
+
+dfa.concat: dfb;
+
+#`[
+    letter  number
+ 0  a       1
+ 1  b       2
+    letter  number
+ 0  c       3
+ 1  d       4
+      letter  number
+ 0    a       1
+ 1    b       2
+ 0⋅1  c       3
+ 1⋅1  d       4
+#]
+
+# duplicate labels are extended with $mark ~ $i++ 
+# $mark = '⋅'; # unicode Dot Operator U+22C5
+
+# use :ii (:ignore-index) to reset the index
+
+my \dfc = DataFrame.new(
+        [['c', 3, 'cat'], ['d', 4, 'dog']],
+        columns => <animal letter number>,
+);
+
+dfa.concat: dfc;
+
+#`[
+    letter  number  animal
+ 0  c       3       cat
+ 1  d       4       dog
+       letter  number  animal
+ 0    a       1       NaN
+ 1    b       2       NaN
+ 0⋅1  c       3       cat
+ 1⋅1  d       4       dog
+#]
+
+# unknown values are set to NaN
+# concat supports join => outer|inner|right|left
+# default is outer, :jn is alias, you can go :jn<r>
+
+dfa.concat: dfc, join => 'inner';
+
+#`[
+      letter  number
+ 0    a       1
+ 1    b       2
+ 0⋅1  c       3
+ 1⋅1  d       4
+#]
+
+say "=============================================";
+
+### Column Operations ###
+
+# btw you can use splice to switch cols like so,
+my @se = dfb.splice(:ax, dfb.columns<letter>, 1);
+dfb.splice(:ax,0,0,@se);        #note :ax and 0,0
+
 
 
 
