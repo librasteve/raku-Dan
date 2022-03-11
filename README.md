@@ -1,37 +1,15 @@
 **Very much a work in progress - contributions very welcome!**
 
 # raku Dan
-Top level raku **D**ata **AN**alysis Module
+Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** datatype roles & methods, primarily:
+- DataSlices
+- Series
+- DataFrames
 
-The initial focus is a minimal set of datatype roles:
-- Dan::DataSlices
-- Dan::Series
-- Dan::DataFrames
-
-These roles provide a common raku presentation for possible Data Analytic, Numeric & Scientific bindings...
-- Dan::Pandas  - binding to pandas via Inline::Python
-- Dan::Polars  - binding to polars via Rust FFI
-- Dan::Paddle  - binding to Perl(5) Data Language using Inline::Perl5
-- NumRa
-- SciRa
-- [to my knowledge none of this exists yet]
-
-raku Dan is rather a zen concept since:
-- raku contains many Data Analysis constructs & concepts natively anyway
-- it's a stub for future high-performance, native implementations
-
-So what are we getting from raku core that others do in libraries?
-- pipes & maps
-- multi-dimensional arrays
-- slicing & indexing
-- references & views
-- map, reduce, hyper operators
-- operator overloading
-- concurrency
-- types (incl. NaN)
+A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
 # SYNOPOSIS
-
+[more in bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
 ### Series ###
 
@@ -150,3 +128,16 @@ say df2.columns;
 say df2.dtypes;
 say "=============================================";
 ```
+raku Dan is rather a zen concept since:
+- raku contains many Data Analysis constructs & concepts natively anyway
+- it's a stub for future high-performance, native implementations / AST optimization
+
+So what are we getting from raku core that others do in libraries?
+- pipes & maps
+- multi-dimensional arrays
+- slicing & indexing
+- references & views
+- map, reduce, hyper operators
+- operator overloading
+- concurrency
+- types (incl. NaN)
