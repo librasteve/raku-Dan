@@ -1,5 +1,3 @@
-**Very much a work in progress - contributions very welcome!**
-
 # raku Dan
 Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** datatype roles & methods, primarily:
 - DataSlices
@@ -9,6 +7,8 @@ Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** d
 A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
 It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 6)
+
+Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
 # SYNOPOSIS
 more examples in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
