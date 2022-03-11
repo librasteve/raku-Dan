@@ -616,11 +616,11 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataFrame:D: $start = 0, $elems?, :ax(:$axis) is copy, *@replace ) {
 
-        $axis = clean-axis(:$axis);
-
+           $axis = clean-axis(:$axis);
         my $pair = @replace.first ~~ Pair ?? 1 !! 0;
+
         my @wip = self.get-ap: :$axis, :$pair;
-        my @res = @wip.splice: $start, $elems//*, @replace;
+        my @res = @wip.splice: $start, $elems//*, @replace;   # just an Array splice
                   self.set-ap: :$axis, :$pair, @wip;
 
         @res

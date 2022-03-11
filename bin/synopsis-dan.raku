@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use lib '../lib';
-use Dan;
+use Dan :ALL;
 
 #SYNOPSIS
 
@@ -75,7 +75,7 @@ say ~df[0..*-2][1..*-1];    #2d DataFrame
 
 # Taking a row slice makes an Array of DataSlices
 # the ^ postfix converts them into a new DataFrame
-say ~df{dates[0..1]} ^;      
+say ~df{dates[0..1]}^;      
 
 say "=============================================";
 
@@ -149,24 +149,26 @@ df2.cx: <a b c d e f>;  # re-label
 # use a Pair literal like :!axis, :axis(1) or :ax 
 
 # prep DataSlice 
-my $ds := df2[1];                       
-$ds.splice($ds.index<D>,1,7);
+my $ds = df2[1];                       
+$ds.splice($ds.index<d>,1,7);
 
 # splice rows
 $ds.name = 'j';                         #new index from ds.name
-df2.splice( :!axis, 2, 1, $ds );        #$start, $elems, *@replace
+df2.splice( :!axis, 2, 1, [$ds] );      #$start, $elems, *@replace
 #-or-
-df2.splice( 1, 2, (j => $ds) );         #new index from Pair(s)
+df2.splice( 1, 2, [j => $ds] );         #new index from Pair(s)
 
 # prep Series 
-my $se = df2.series: <A>;               
+my $se = df2.series: <a>;               
 $se.splice(2,1,7);
 
 # splice on cols 
+say ~df2;
 $se.name = 'K';                         #new column label from se.name 
-df2.splice( (axis => 1), 3, 2, $se);    #$start, $elems, *@replace
+dd $se;
+df2.splice( axis => 1, 3, 2, [$se]);    #$start, $elems, *@replace
 #-or-
-df2.splice( :ax, 1, 2, (K => $se) );    #new column label from Pairs
+df2.splice( :ax, 1, 2, [K => $se] );    #new column label from Pairs
 
 say "=============================================";
 
@@ -237,6 +239,18 @@ dfa.concat: dfc, join => 'inner';
  1⋅1  d       4
 #]
 
+my \dfd = DataFrame.new( [['bird', 'polly'], ['monkey', 'george']],
+                         columns=> <animal name>,                   );
+
+# set axis param (see splice above) for col-wise concat
+dfb.concat: dfd, axis => 1;
+
+#`[
+    letter  number  animal  name
+ 0  a       1       bird    polly
+ 1  b       2       monkey  george
+#]
+
 say "=============================================";
 
 ### Column Operations ###
@@ -257,7 +271,8 @@ for dfc.columns.sort.map(*.value) {
 my ($a, $b)  = <animal name>.map({ dfd.series($_) });
 
 #or splice them out (splices return arrays, we just want the first item)
-my ($a, $b)  = <animal name>.map({ dfd.splice(:ax, dfd.columns{$_}, 1).first }); 
+   ($a, $b)  = <animal name>.map({ dfd.splice(:ax, dfd.columns{$_}, 1).first }); 
+
 
 #use hyper operators to combine as new Series, and splice back in as named pair 
 my $combo = Series.new( $a >>~<< $b );
