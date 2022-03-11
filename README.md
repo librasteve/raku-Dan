@@ -8,21 +8,17 @@ Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** d
 
 A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
+It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 6)
+
 # SYNOPOSIS
-more details in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
+more examples in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
 ### Series ###
 
-my \s = $;    
-
-s = Series.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
-#   -or-
-s = Series.new( [rand xx 5], index => <a b c d e>);
-#   -or-
-s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
-
-say ~s; 
-say "---------------------------------------------";
+my \s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
+#  -or- Series.new( [rand xx 5], index => <a b c d e>);
+#  -or- Series.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
+say ~s;
 
 # Accessors
 say s[1];           #2   (positional)
@@ -36,42 +32,40 @@ say [+] s;          #3
 say s >>+>> 2;      #(3 2 4)
 say s >>+<< s;      #(2 0 4)
 
+# Update
+s.data[1] = 1;            # set value
+s.splice(1,2,(j=>3));     # update index & value
+s.fillna;                 # undefined => NaN
+
+# Combine
+my \t = Series.new( [f=>1, e=>0, d=>2] );
+s.concat: t;              # concatenate
+
 say "=============================================";
 
 ### DataFrames ###
 
 my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
 my \df = DataFrame.new( [[rand xx 4] xx 6], index => dates, columns => <A B C D> );
-
 say ~df;
 say "---------------------------------------------";
 
-# Data Accessors
+# Data Accessors [row;col]
 say df[0;0];
-df[0;0] = 3;                #can set values
+df[0;0] = 3;                # set value
 
-# Smart Accessors
+# Smart Accessors (mix Positional and Associative)
 say df[0][0];
-say df[0]<A>;               #mix Positional and Associative
-say df{dates[0]}[0];
-say df{dates[0]}<A>;
-say df[0][*];               #1d Row 0 (Values)
+say df[0]<A>;
+say df{"2022-01-03"}[1];
 
-# Object Accessors
-say ~df[0];                 #1d Row 0 (DataSlice)
-say ~df[*]<A>;              #1d Col A (Series)
-say ~df[0..*-2][1..*-1];    #2d DataFrame
+# Object Accessors & Slices (see note 1)
+say ~df[0];                 # 1d Row 0 (DataSlice)
+say ~df[*]<A>;              # 1d Col A (Series)
+say ~df[0..*-2][1..*-1];    # 2d DataFrame
+say ~df{dates[0..1]}^;      # the ^ postfix converts an Array of DataSlices into a new DataFrame
 
-# raku accessors use any function that makes a List, e.g.
-# Positional slices: [1,3,4], [0..3], [0..*-2], [*]
-# Associative slices: <A C D>, {'A'..'C'}
-# viz. https://docs.raku.org/language/subscripts
-
-# Taking a bare row slice makes an Array of DataSlices
-# the ^ postfix converts them into a new DataFrame
-say ~df{dates[0..1]}^;    
-
-say "=============================================";
+say "---------------------------------------------";
 
 ### DataFrame Operations ###
 
@@ -79,37 +73,29 @@ say "=============================================";
 say df.map(*.map(*+2).eager);
 say [+] df[*][1];
 say [+] df[*][*];
-say ~df.T;                  #Transpose
+say ~df.T;                  # Transpose
 
 # Hyper
 say df >>+>> 2;
 say df >>+<< df;
 
-# Head & Tail
+# Describe
 say ~df[0..^3]^;            # head
 say ~df[(*-3..*-1)]^;       # tail
-
-# Describe
-say ~df[*]<A>.describe;
+say ~df.shape;
 say ~df.describe;
 
 # Sort
-#viz. https://docs.raku.org/routine/sort#(List)_routine_sort
-
 say ~df.sort: { .[1] };         # sort by 2nd col (ascending)
-say ~df.sort: { .[1], .[2] };   # sort by 2nd col, then 3rd col (and so on)
 say ~df.sort: { -.[1] };        # sort by 2nd col (descending)
 say ~df.sort: { df[$++]<C> };   # sort by col C
 say ~df.sort: { df.ix[$++] };   # sort by index
-say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 
-# Grep
-# global replace binary filter
-# works on data "in place" - so make a copy first if you need to keep all the data
-say ~df.grep( { .[1] < 0.5 } ); # grep by 2nd column 
-say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
+# Grep (binary filter)
+say ~df.grep( { .[1] < 0.5 } );                                # by 2nd column 
+say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # by index (multiple) 
 
-say "=============================================";
+say "---------------------------------------------";
 
 my \df2 = DataFrame.new([
         A => 1.0,
@@ -119,20 +105,122 @@ my \df2 = DataFrame.new([
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
-
 say ~df2;
-say "---------------------------------------------";
 say df2.data;
-say df2.index;
-say df2.columns;
 say df2.dtypes;
+say df2.index;    #Hash (name => row number)   -or- df.ix; #Array
+say df2.columns;  #Hash (label => col number)  -or- df.cx; #Array
+
+say "---------------------------------------------";
+
+### DataFrame Splicing ### (see notes 2 & 3)
+
+# row-wise splice:
+my $ds = df2[1];                        # get a DataSlice 
+$ds.splice($ds.index<d>,1,7);           # tweak it a bit
+df2.splice( 1, 2, [j => $ds] );         # default
+
+# column-wise splice:
+my $se = df2.series: <a>;               # get a Series 
+$se.splice(2,1,7);                      # tweak it a bit
+df2.splice( :ax, 1, 2, [K => $se] );    # axis => 1
+
+say "---------------------------------------------";
+
+### DataFrame Concatenation ### (see notes 4 & 5)
+
+my \dfa = DataFrame.new(
+        [['a', 1], ['b', 2]],
+        columns => <letter number>,
+);
+#`[
+    letter  number
+ 0  a       1
+ 1  b       2
+#]
+
+my \dfc = DataFrame.new(
+        [['c', 3, 'cat'], ['d', 4, 'dog']],
+        columns => <animal letter number>,
+);
+#`[
+    letter  number  animal
+ 0  c       3       cat 
+ 1  d       4       dog 
+#]
+
+dfa.concat: dfc;        # row-wise / outer join is default
+#`[
+       letter  number  animal
+ 0    a       1       NaN 
+ 1    b       2       NaN 
+ 0⋅1  c       3       cat 
+ 1⋅1  d       4       dog 
+#]
+
+dfa.concat: dfc, join => 'inner';
+#`[
+      letter  number
+ 0    a       1
+ 1    b       2
+ 0⋅1  c       3
+ 1⋅1  d       4
+#]
+
+my \dfd = DataFrame.new( [['bird', 'polly'], ['monkey', 'george']],
+                         columns=> <animal name>,                   );
+
+dfb.concat: dfd, axis => 1;             #column-wise
+#`[
+    letter  number  animal  name
+ 0  a       1       bird    polly
+ 1  b       2       monkey  george
+#]
+
 say "=============================================";
 ```
-raku Dan is rather a zen concept since:
-- raku contains many Data Analysis constructs & concepts natively anyway
-- it's a stub for future high-performance, native implementations / AST optimization
 
-So what are we getting from raku core that others do in libraries?
+Notes:
+
+[1] raku accessors may use any function that makes a List, e.g.
+
+Positional slices: ```[1,3,4], [0..3], [0..*-2], [*]```
+
+Associative slices: ```<A C D>, {'A'..'C'}```
+        
+viz. https://docs.raku.org/language/subscripts
+        
+[2] splice is the core update method 
+        
+for all add, drop, move, delete, update & insert operations 
+        
+viz. https://docs.raku.org/routine/splice
+
+[3] named parameter 'axis' indicates if row(0) or col(1)
+        
+if omitted, default=0 (row) / 'ax' is an alias
+        
+use a Pair literal like ```:!axis, :axis(1) or :ax```
+
+[4] concat is the core combine method 
+
+for all join, merge & combine operations
+
+duplicate labels are extended with ```$mark ~ $i++```
+
+```# $mark = '⋅'; # unicode Dot Operator U+22C5```
+
+use ```:ii (:ignore-index)``` to reset the index (row or col)
+
+[5] concat supports ```join => outer|inner|right|left```
+
+unknown values are set to NaN
+
+default is outer, :jn is alias, and you can go :jn<r> on first letter
+
+set axis param (see splice above) for col-wise concatenation
+
+[6] what are we getting from raku core that others do in libraries?
 - pipes & maps
 - multi-dimensional arrays
 - slicing & indexing
@@ -141,3 +229,4 @@ So what are we getting from raku core that others do in libraries?
 - operator overloading
 - concurrency
 - types (incl. NaN)
+        
