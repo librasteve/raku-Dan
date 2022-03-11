@@ -9,7 +9,7 @@ Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** d
 A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
 # SYNOPOSIS
-[more in bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
+more details in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
 ### Series ###
 
