@@ -222,7 +222,7 @@ set axis param (see splice above) for col-wise concatenation
 
 [6] relies on hypers instead of overriding dyadic operators [+-*/]
 
-```
+```raku
 say ~my \quants = Series.new([100, 15, 50, 15, 25]);
 say ~my \prices = Series.new([1.1, 4.3, 2.2, 7.41, 2.89]); 
 say ~my \costs  = Series.new( quants >>*<< prices );
