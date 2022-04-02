@@ -74,12 +74,12 @@ say df.map(*.map(*+2).eager);
 say [+] df[*;1];
 say [+] df[*;*];
 
-# Transpose
-say ~df.T;
-
 # Hyper
 say df >>+>> 2;
 say df >>+<< df;
+
+# Transpose
+say ~df.T;
 
 # Describe
 say ~df[0..^3]^;            # head
