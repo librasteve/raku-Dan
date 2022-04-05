@@ -950,7 +950,7 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export(:ALL) {
     $df[$df.index{@ks}]
 }
 
-### Override second subscript [j] to make DataFrame
+### Override second assoc subscript {j} to make DataFrame
 
 multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export(:ALL) {
     my $p = @aods.first.index{$k};
