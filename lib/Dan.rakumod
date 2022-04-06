@@ -65,25 +65,15 @@ role DataSlice does Positional does Iterable is export(:ALL) {
             }
             default {
                 my @res = @!data.splice($start, $elems//*, @replace); 
-                self.fillna; 
+                self.und2nan; 
                 @res
             }
         }
     }
 
     #| set empty data slots to Nan
-    method fillna {
+    method und2nan {
         self.aop.grep(! *.value.defined).map({ $_.value = NaN });
-    }
-
-    #| drop index and data when Nan
-    method dropna {
-        self.aop: self.aop.grep(*.value ne NaN);
-    }
-
-    #| drop index and data when empty 
-    method dropem {
-        self.aop: self.aop.grep(*.value.defined).Array;
     }
 
     # concat
@@ -723,7 +713,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     ### Mezzanine methods ###  
     # (these use Accessors) #
 
-    method fillna {
+    method und2nan {
         self.map(*.map({ $_ //= NaN }).eager);
     }
 

@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 22;
+plan 21;
 
 use Dan :ALL;
 
@@ -25,11 +25,8 @@ ok s<c> == 3,                                                               's.s
 s.splice( 1,2,(j => Nil) );
 ok s.ix[1] eq 'j',                                                          's.splice(aop)';
 
-s.fillna;
-is ~s<j>, "NaN",                                                            's.fillna';
-
-s.dropna;
-ok +s.ix == 1,                                                              's.dropna';
+s.und2nan;
+is ~s<j>, "NaN",                                                            's.und2nan';
 
 s = Series.new([b=>1, a=>0, c=>2]);
 t = Series.new([f=>1, e=>0, d=>2]);
@@ -97,8 +94,8 @@ $df4.splice( :ax(1),3,2,$se);
 ok $df4<j><X> == 1,                                                                 'df.splice pair [col]';
 
 $df4[0;0] = Nil;
-$df4.fillna;
-is $df4[0;0], "NaN",                                                                'df.fillna';
+$df4.und2nan;
+is $df4[0;0], "NaN",                                                                'df.und2nan';
 
 my \dfa = DataFrame.new(
         [['a', 1], ['b', 2]],
