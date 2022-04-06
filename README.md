@@ -35,7 +35,6 @@ say s >>+<< s;      #(2 0 4)
 # Update
 s.data[1] = 1;            # set value
 s.splice(1,2,(j=>3));     # update index & value
-s.fillna;                 # undefined => NaN
 
 # Combine
 my \t = Series.new( [f=>1, e=>0, d=>2] );
