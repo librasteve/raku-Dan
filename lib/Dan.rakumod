@@ -53,26 +53,15 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         self.data = @aop.map(*.value);
     }
 
-    #| splice as Array of values or Array of Pairs
+    #| splice as Array of Pairs
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
-        given @replace {
-            when .first ~~ Pair {
-                my @aop = self.aop;
+	my @aop = self.aop;
 
-                my @res = @aop.splice($start, $elems//*, @replace);
-		self.data.map({ $_ //= NaN }).eager;
-                self.aop: @aop;
+	my @res = @aop.splice($start, $elems//*, @replace);
+	self.aop: @aop;
 
-                @res
-            }
-            default {
-                my @res = @!data.splice($start, $elems//*, @replace); 
-		self.data.map({ $_ //= NaN }).eager;
-
-                @res
-            }
-        }
+	@res
     }
 
     # concat

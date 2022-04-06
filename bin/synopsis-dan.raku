@@ -36,8 +36,7 @@ say s >>+<< s;      #(2 0 4)
 # viz. https://docs.raku.org/routine/splice
 s.ix: <b c d>;      #re-index
 s.splice: *-1;      #pop
-s.splice(1,2,3);      #$start, $elems, *@replace
-s.splice(1,2,(j=>3)); #update index & value
+s.splice(1,2,(j=>3); #$start, $elems, *@replace
 
 # concat is the core method for all join,
 # merge & combine operations

@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 20;
+plan 18;
 
 use Dan :ALL;
 
@@ -17,13 +17,10 @@ s.ix: <b c d>;
 is ~s, "b\t1\nc\t0\nd\t2\ndtype: Int, name: anon\n",                        's.ix';
 
 s.splice: *-1;
-is ~s<d>, "NaN",                                                            's.pop';
-
-s.splice(1,2,3);
-ok s<c> == 3,                                                               's.splice'; 
+ok s.elems == 2,                                                            's.pop';
 
 s.splice( 1,2,(j => Nil) );
-ok s.ix[1] eq 'j',                                                          's.splice(aop)';
+ok s.ix[1] eq 'j',                                                          's.splice';
 
 s = Series.new([b=>1, a=>0, c=>2]);
 t = Series.new([f=>1, e=>0, d=>2]);
@@ -62,14 +59,14 @@ my $df3 = DataFrame.new([
 ]);
 
 my $ds = $df3[1];
-$ds.splice(3,1,7);
+$ds.splice(3,1,(D => 7));
 $ds.name = '7';
 
 my $se = $df3.series: <A>;
-$se.splice(2,1,7);
+$se.splice(2,1,(2 => 7));
 $se.name = 'X';
 
-$df3.splice( 2,1,$ds );
+$df3.splice(2,1,$ds);
 ok $df3[2]<D> == 7,                                                                 'df.splice array [row]';
 
 $df3.splice( :ax(1),3,2,$se);
@@ -89,10 +86,6 @@ ok $df4<j><D> == 7,                                                             
 
 $df4.splice( :ax(1),3,2,$se);
 ok $df4<j><X> == 1,                                                                 'df.splice pair [col]';
-
-$df4[0;0] = Nil;
-$df4.und2nan;
-is $df4[0;0], "NaN",                                                                'df.und2nan';
 
 my \dfa = DataFrame.new(
         [['a', 1], ['b', 2]],
