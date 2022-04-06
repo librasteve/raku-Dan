@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 21;
+plan 20;
 
 use Dan :ALL;
 
@@ -24,9 +24,6 @@ ok s<c> == 3,                                                               's.s
 
 s.splice( 1,2,(j => Nil) );
 ok s.ix[1] eq 'j',                                                          's.splice(aop)';
-
-s.und2nan;
-is ~s<j>, "NaN",                                                            's.und2nan';
 
 s = Series.new([b=>1, a=>0, c=>2]);
 t = Series.new([f=>1, e=>0, d=>2]);

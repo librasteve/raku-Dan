@@ -38,7 +38,6 @@ s.ix: <b c d>;      #re-index
 s.splice: *-1;      #pop
 s.splice(1,2,3);      #$start, $elems, *@replace
 s.splice(1,2,(j=>3)); #update index & value
-s.und2nan;           #fill NaN if undef 
 
 # concat is the core method for all join,
 # merge & combine operations
