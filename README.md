@@ -6,7 +6,7 @@ Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** d
 
 A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
-It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 6)
+It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 7 below)
 
 Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
