@@ -1,5 +1,5 @@
 # raku Dan
-Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** datatype roles & methods, primarily:
+Top level raku **D**ata **AN**alysis Module that provides **a base set of raku-style** datatype roles, accessors & methods, primarily:
 - DataSlices
 - Series
 - DataFrames
