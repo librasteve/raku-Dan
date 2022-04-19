@@ -46,7 +46,10 @@ say "=============================================";
 
 my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
 my \df = DataFrame.new( [[rand xx 4] xx 6], index => dates, columns => <A B C D> );
+#  -or- DataFrame.new( [rand xx 5], columns => <A B C D>);
+#  -or- DataFrame.new( [rand xx 5] );
 say ~df;
+
 say "---------------------------------------------";
 
 # Data Accessors [row;col]
