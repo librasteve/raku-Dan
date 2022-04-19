@@ -4,7 +4,7 @@ Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** d
 - Series
 - DataFrames
 
-A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
+A common basis for bindings such as ... [Dan::Pandas](https://github.com/p6steve/raku-Dan-Pandas) (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
 
 It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 7 below)
 
@@ -53,7 +53,7 @@ say "---------------------------------------------";
 say df[0;0];
 df[0;0] = 3;                # set value
 
-# Smart Accessors (mix Positional and Associative)
+# Cascading Accessors (ok to mix Positional and Associative)
 say df[0][0];
 say df[0]<A>;
 say df{"2022-01-03"}[1];
