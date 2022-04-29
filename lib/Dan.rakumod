@@ -267,7 +267,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     has Any         @.data = [];        #redo 2d shaped Array when [; ] implemented
     has Int         %.index;            #row index
     has Int         %.columns;          #column index
-    has Any:U       @.dtypes;
+    has             @.dtypes;
 
     ### Contructors ###
 
