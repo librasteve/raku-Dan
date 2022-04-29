@@ -215,37 +215,10 @@ role Series does DataSlice is export(:ALL) {
             }
         }
 
-
         # auto set dtype if not set from args
         if $.dtype eq 'Any' {       #can't use !~~ Any since always False
 	    say $!dtype = @.data.are
 	}
-#`[
-            my %dtypes = (); 
-            for @.data -> $d {
-                %dtypes{$d.^name} = 1;
-            }
-
-            given %dtypes.keys.any {
-                # if any are Str/Date, then whole Series must be
-                when 'Str'  { 
-                    $!dtype = Str;
-                    die "Cannot mix other dtypes with Str!" unless %dtypes.keys.all ~~ 'Str'
-                }
-                when 'Date' { 
-                    $!dtype = Date;
-                    die "Cannot mix other dtypes with Date!" unless %dtypes.keys.all ~~ 'Date'
-                }
-
-                # Real types are handled in descending sequence
-                when 'Num'  { $!dtype = Num }
-                when 'Rat'  { $!dtype = Rat }
-                when 'Int'  { $!dtype = Int }
-                when 'Bool' { $!dtype = Bool }
-            }
-        }
-#]
-
     }
 
     ### Mezzanine methods ###  (these use Accessors)
