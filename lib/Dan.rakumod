@@ -258,12 +258,7 @@ role Series does DataSlice is export(:ALL) {
     }
 }
 
-role Categorical is Series is export(:ALL) {
-    # Output
-    method dtype {
-        Str.^name
-    }
-}
+role Categorical is Series is export(:ALL) {  }
 
 role DataFrame does Positional does Iterable is export(:ALL) {
     has Str         $.name is rw = 'anon';
