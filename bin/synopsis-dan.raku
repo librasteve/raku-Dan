@@ -35,6 +35,7 @@ say s >>+<< s;      #(2 0 4)
 # move, delete, update & insert operations 
 # viz. https://docs.raku.org/routine/splice
 s.ix: <b c d>;      #re-index
+s.data[1] = 1;      #assign data value
 s.splice: *-1;      #pop
 s.splice(1,2,3);      #$start, $elems, *@replace
 s.splice(1,2,(j=>3)); #update index & value
@@ -163,9 +164,7 @@ my $se = df2.series: <a>;
 $se.splice(2,1,7);
 
 # splice on cols 
-say ~df2;
 $se.name = 'K';                         #new column label from se.name 
-dd $se;
 df2.splice( axis => 1, 3, 2, [$se]);    #$start, $elems, *@replace
 #-or-
 df2.splice( :ax, 1, 2, [K => $se] );    #new column label from Pairs
