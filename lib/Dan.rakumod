@@ -187,7 +187,7 @@ role Series does DataSlice is export(:ALL) {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
-    multi method dtype {
+    method dtype {
         @.data.are     
     }
 
@@ -258,7 +258,7 @@ role Series does DataSlice is export(:ALL) {
     }
 }
 
-role Categorical is Series is export(:ALL) {  }
+role Categorical is Series is export(:ALL) { ... }
 
 role DataFrame does Positional does Iterable is export(:ALL) {
     has Str         $.name is rw = 'anon';
