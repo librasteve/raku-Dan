@@ -53,37 +53,15 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         self.data = @aop.map(*.value);
     }
 
-    #| splice as Array of values or Array of Pairs
+    #| splice as Array of Pairs
     #| viz. https://docs.raku.org/routine/splice
     method splice( DataSlice:D: $start = 0, $elems?, *@replace ) {
-        given @replace {
-            when .first ~~ Pair {
-                my @aop = self.aop;
-                my @res = @aop.splice($start, $elems//*, @replace);
-                self.aop: @aop;
-                @res
-            }
-            default {
-                my @res = @!data.splice($start, $elems//*, @replace); 
-                self.fillna; 
-                @res
-            }
-        }
-    }
+	my @aop = self.aop;
 
-    #| set empty data slots to Nan
-    method fillna {
-        self.aop.grep(! *.value.defined).map({ $_.value = NaN });
-    }
+	my @res = @aop.splice($start, $elems//*, @replace);
+	self.aop: @aop;
 
-    #| drop index and data when Nan
-    method dropna {
-        self.aop: self.aop.grep(*.value ne NaN);
-    }
-
-    #| drop index and data when empty 
-    method dropem {
-        self.aop: self.aop.grep(*.value.defined).Array;
+	@res
     }
 
     # concat
@@ -176,7 +154,6 @@ role DataSlice does Positional does Iterable is export(:ALL) {
 
 #| Series is a shim on DataSlice to mix in dtype and legacy constructors
 role Series does DataSlice is export(:ALL) {
-    has Any:U       $.dtype;                  #ie. type object
 
     ### Constructors ###
 
@@ -210,9 +187,8 @@ role Series does DataSlice is export(:ALL) {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
-    # provide ^name of type object eg. for output
-    multi method dtype {
-        $!dtype.^name       
+    method dtype {
+        @.data.are     
     }
 
     method TWEAK {
@@ -234,33 +210,6 @@ role Series does DataSlice is export(:ALL) {
             if ! %.index {
                 my $i = 0;
                 %.index{~$i} = $i++ for ^@.data
-            }
-        }
-
-        # auto set dtype if not set from args
-        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
-
-            my %dtypes = (); 
-            for @.data -> $d {
-                %dtypes{$d.^name} = 1;
-            }
-
-            given %dtypes.keys.any {
-                # if any are Str/Date, then whole Series must be
-                when 'Str'  { 
-                    $!dtype = Str;
-                    die "Cannot mix other dtypes with Str!" unless %dtypes.keys.all ~~ 'Str'
-                }
-                when 'Date' { 
-                    $!dtype = Date;
-                    die "Cannot mix other dtypes with Date!" unless %dtypes.keys.all ~~ 'Date'
-                }
-
-                # Real types are handled in descending sequence
-                when 'Num'  { $!dtype = Num }
-                when 'Rat'  { $!dtype = Rat }
-                when 'Int'  { $!dtype = Int }
-                when 'Bool' { $!dtype = Bool }
             }
         }
     }
@@ -309,12 +258,7 @@ role Series does DataSlice is export(:ALL) {
     }
 }
 
-role Categorical is Series is export(:ALL) {
-    # Output
-    method dtype {
-        Str.^name
-    }
-}
+role Categorical is Series is export(:ALL) { ... }
 
 role DataFrame does Positional does Iterable is export(:ALL) {
     has Str         $.name is rw = 'anon';
@@ -723,10 +667,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     ### Mezzanine methods ###  
     # (these use Accessors) #
 
-    method fillna {
-        self.map(*.map({ $_ //= NaN }).eager);
-    }
-
     method T {
         DataFrame.new( data => ([Z] @.data), index => %.columns, columns => %.index )
     }
@@ -950,7 +890,7 @@ multi postcircumfix:<{ }>( DataFrame:D $df, @ks ) is export(:ALL) {
     $df[$df.index{@ks}]
 }
 
-### Override second subscript [j] to make DataFrame
+### Override second assoc subscript {j} to make DataFrame
 
 multi postcircumfix:<{ }>( DataSlice @aods , $k ) is export(:ALL) {
     my $p = @aods.first.index{$k};

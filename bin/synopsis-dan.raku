@@ -37,10 +37,7 @@ say s >>+<< s;      #(2 0 4)
 s.ix: <b c d>;      #re-index
 s.data[1] = 1;      #assign data value
 s.splice: *-1;      #pop
-s.splice(1,2,3);      #$start, $elems, *@replace
-s.splice(1,2,(j=>3)); #update index & value
-s.fillna;           #fill NaN if undef 
-s.dropna;           #drop NaN elements 
+s.splice(1,2,(j=>3); #$start, $elems, *@replace
 
 # concat is the core method for all join,
 # merge & combine operations

@@ -1,12 +1,12 @@
 # raku Dan
-Top level raku **D**ata **AN**alysis Module that provides **core, raku-style** datatype roles & methods, primarily:
+Top level raku **D**ata **AN**alysis Module that provides **a base set of raku-style** datatype roles, accessors & methods, primarily:
 - DataSlices
 - Series
 - DataFrames
 
-A common basis for bindings such as ... Dan::Pandas (via Inline::Python), Dan::Polars (via NativeCall / Rust FFI), etc.
+A common basis for bindings such as ... [Dan::Pandas](https://github.com/p6steve/raku-Dan-Pandas) (via Inline::Python), Dan::Polars(tbd) (via NativeCall / Rust FFI), etc.
 
-It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 6)
+It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 7 below)
 
 Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
@@ -35,7 +35,6 @@ say s >>+<< s;      #(2 0 4)
 # Update
 s.data[1] = 1;            # set value
 s.splice(1,2,(j=>3));     # update index & value
-s.fillna;                 # undefined => NaN
 
 # Combine
 my \t = Series.new( [f=>1, e=>0, d=>2] );
@@ -47,14 +46,17 @@ say "=============================================";
 
 my \dates = (Date.new("2022-01-01"), *+1 ... *)[^6];
 my \df = DataFrame.new( [[rand xx 4] xx 6], index => dates, columns => <A B C D> );
+#  -or- DataFrame.new( [rand xx 5], columns => <A B C D>);
+#  -or- DataFrame.new( [rand xx 5] );
 say ~df;
+
 say "---------------------------------------------";
 
 # Data Accessors [row;col]
 say df[0;0];
 df[0;0] = 3;                # set value
 
-# Smart Accessors (mix Positional and Associative)
+# Cascading Accessors (ok to mix Positional and Associative)
 say df[0][0];
 say df[0]<A>;
 say df{"2022-01-03"}[1];
@@ -71,13 +73,15 @@ say "---------------------------------------------";
 
 # 2d Map/Reduce
 say df.map(*.map(*+2).eager);
-say [+] df[*][1];
-say [+] df[*][*];
-say ~df.T;                  # Transpose
+say [+] df[*;1];
+say [+] df[*;*];
 
 # Hyper
 say df >>+>> 2;
 say df >>+<< df;
+
+# Transpose
+say ~df.T;
 
 # Describe
 say ~df[0..^3]^;            # head
@@ -220,7 +224,15 @@ default is outer, :jn is alias, and you can go :jn<r> on first letter
 
 set axis param (see splice above) for col-wise concatenation
 
-[6] what are we getting from raku core that others do in libraries?
+[6] relies on hypers instead of overriding dyadic operators [+-*/]
+
+```raku
+say ~my \quants = Series.new([100, 15, 50, 15, 25]);
+say ~my \prices = Series.new([1.1, 4.3, 2.2, 7.41, 2.89]); 
+say ~my \costs  = Series.new( quants >>*<< prices );
+```
+        
+[7] what are we getting from raku core that others do in libraries?
 - pipes & maps
 - multi-dimensional arrays
 - slicing & indexing
