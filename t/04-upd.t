@@ -31,7 +31,7 @@ ok (s.concat: t).ix[3] eq 'f',                                              's.c
 my $df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
-        C => Series.new(1, index => [0..^4], dtype => Num),
+        C => Series.new(1e0, index => [0..^4]),
         D => [3 xx 4],
         E => Categorical.new(<test train test train>),
         F => "foo",

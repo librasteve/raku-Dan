@@ -254,18 +254,20 @@ role Series does DataSlice is export(:ALL) {
 
     ### Outputs ###
     method str-attrs {
-        %( :$.name, dtype => $.dtype )
+        %( :$.name, dtype => $.dtype.^name )
     }
 }
 
-role Categorical is Series is export(:ALL) { ... }
+role Categorical is Series is export(:ALL) { 
+    #FIXME align to Enums
+}
 
 role DataFrame does Positional does Iterable is export(:ALL) {
     has Str         $.name is rw = 'anon';
     has Any         @.data = [];        #redo 2d shaped Array when [; ] implemented
     has Int         %.index;            #row index
     has Int         %.columns;          #column index
-    has Str         @.dtypes;
+    has Any:U       @.dtypes;
 
     ### Contructors ###
 
@@ -328,8 +330,8 @@ role DataFrame does Positional does Iterable is export(:ALL) {
                         my $name = ~$p.key;
                         given $p.value {
                             # handle Series/Array with row-elems (auto index)   #TODO: avoid Series.new
-                            when Series { take Series.new( $_.data, :$name, dtype => ::($_.dtype) ) }
-                            when Array  { take Series.new( $_, :$name ) }
+                            when Series { take Series.new( $_.data, :$name ) }
+                            when Array  { take Series.new( $_,      :$name ) }
 
                             # handle Scalar items (set index to auto-expand)    #TODO: lazy expansion
                             when Str|Real|Date { take Series.new( $_, :$name, :@index ) }
@@ -728,7 +730,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         gather {
             for @labels -> $k {
-                take $k ~ ' => ' ~ @!dtypes[$++]
+                take $k ~ ' => ' ~ @!dtypes[$++].^name
             }
         }.join("\n")
     }

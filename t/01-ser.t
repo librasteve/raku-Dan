@@ -46,7 +46,7 @@ ok s{"c"}==5,                                                               'Ass
 ok s.data == [5 xx 5],                                                      '.data';
 ok s.index.map(*.key) == 'a'..'e',                                          '.index keys';
 ok s.of ~~ Any,                                                             '.of';
-ok s.dtype eq 'Num',                                                        '.dtype';
+ok s.dtype ~~ Num,                                                          '.dtype';
 
 # Operations 
 

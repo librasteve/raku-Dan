@@ -147,8 +147,10 @@ df2.cx: <a b c d e f>;  # re-label
 # use a Pair literal like :!axis, :axis(1) or :ax 
 
 # prep DataSlice 
+say ~df2;
+
 my $ds = df2[1];                       
-$ds.splice($ds.index<d>,1,7);
+$ds.splice($ds.index<d>,1,[d=>7]);
 
 # splice rows
 $ds.name = 'j';                         #new index from ds.name
@@ -158,7 +160,7 @@ df2.splice( 1, 2, [j => $ds] );         #new index from Pair(s)
 
 # prep Series 
 my $se = df2.series: <a>;               
-$se.splice(2,1,7);
+$se.splice( 2, 1, [a => 7] );
 
 # splice on cols 
 $se.name = 'K';                         #new column label from se.name 
@@ -221,6 +223,8 @@ dfa.concat: dfc;
  1⋅1  d       4       dog
 #]
 
+say ~dfa;
+
 # unknown values are set to NaN
 # concat supports join => outer|inner|right|left
 # default is outer, :jn is alias, you can go :jn<r>
@@ -248,6 +252,7 @@ dfb.concat: dfd, axis => 1;
 #]
 
 say "=============================================";
+say ~dfb;
 
 ### Column Operations ###
 
@@ -275,4 +280,5 @@ my $combo = Series.new( $a >>~<< $b );
 dfd.splice: :ax, 0, 0, (:$combo);
 
 say "=============================================";
+say ~dfd;
 

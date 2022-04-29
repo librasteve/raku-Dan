@@ -52,13 +52,13 @@ is ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ), "   A  B  C  D ", 
 my \df2 = DataFrame.new([
         A => 1.0,
         B => Date.new("2022-01-01"),
-        C => Series.new(1, index => [0..^4], dtype => Num),
+        C => Series.new(1, index => [0..^4]),
         D => [3 xx 4],
         E => Categorical.new(<test train test train>),
         F => "foo",
 ]);
 ok df2.columns.elems == 6,                                                              '.columns';
-is df2.dtypes, "A => Rat\nB => Date\nC => Num\nD => Int\nE => Str\nF => Str",           '.dtypes';
+is df2.dtypes, "A => Rat\nB => Date\nC => Int\nD => Int\nE => Str\nF => Str",           '.dtypes';
 
 is df2.shape, "4 6",                                                                  '.shape';
 
