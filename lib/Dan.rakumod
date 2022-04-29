@@ -217,7 +217,7 @@ role Series does DataSlice is export(:ALL) {
 
         # auto set dtype if not set from args
         if $.dtype eq 'Any' {       #can't use !~~ Any since always False
-	    say $!dtype = @.data.are
+	    $!dtype = @.data.are
 	}
     }
 
