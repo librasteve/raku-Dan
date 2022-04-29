@@ -25,7 +25,7 @@ my \s = $;
 
 s = Series.new([1, 3, 5, NaN, 6, 8], name => "mary");                                   
 s.name = "john";
-is ~s, "0\t1\n1\t3\n2\t5\n3\tNaN\n4\t6\n5\t8\ndtype: Num, name: john\n",    'new Series'; 
+is ~s, "0\t1\n1\t3\n2\t5\n3\tNaN\n4\t6\n5\t8\ndtype: Real, name: john\n",    'new Series'; 
 
 s = Series.new([0.23945079728503804e0 xx 5], index => <a b c d e>);
 is ~s, "a\t0.23945079728503804\nb\t0.23945079728503804\nc\t0.23945079728503804\nd\t0.23945079728503804\ne\t0.23945079728503804\ndtype: Num, name: anon\n",                                     'explicit index';
