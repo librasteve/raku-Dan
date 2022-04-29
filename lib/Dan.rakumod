@@ -154,7 +154,6 @@ role DataSlice does Positional does Iterable is export(:ALL) {
 
 #| Series is a shim on DataSlice to mix in dtype and legacy constructors
 role Series does DataSlice is export(:ALL) {
-    has Any:U       $.dtype;                  #ie. type object
 
     ### Constructors ###
 
@@ -188,9 +187,8 @@ role Series does DataSlice is export(:ALL) {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
-    # provide ^name of type object eg. for output
     multi method dtype {
-        $!dtype.^name       
+        @.data.are     
     }
 
     method TWEAK {
@@ -214,11 +212,6 @@ role Series does DataSlice is export(:ALL) {
                 %.index{~$i} = $i++ for ^@.data
             }
         }
-
-        # auto set dtype if not set from args
-        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
-	    $!dtype = @.data.are
-	}
     }
 
     ### Mezzanine methods ###  (these use Accessors)
