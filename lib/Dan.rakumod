@@ -725,7 +725,7 @@ role DataFrame does Positional does Iterable is export(:ALL) {
 
         if ! @!dtypes {
             my @series = @labels.map({ self.series($_) });
-              @!dtypes = @series.map({ ~$_.dtype });
+              @!dtypes = @series.map({ $_.dtype });
         }
 
         gather {
