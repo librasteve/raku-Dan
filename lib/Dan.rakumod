@@ -215,9 +215,12 @@ role Series does DataSlice is export(:ALL) {
             }
         }
 
-        # auto set dtype if not set from args
-        if $.dtype eq 'Any' {       #can't use !~~ Any since always False
 
+        # auto set dtype if not set from args
+        if $!dtype eq 'Any' {       #can't use !~~ Any since always False
+	    $!dtype = @.data.are
+	}
+#`[
             my %dtypes = (); 
             for @.data -> $d {
                 %dtypes{$d.^name} = 1;
@@ -241,6 +244,8 @@ role Series does DataSlice is export(:ALL) {
                 when 'Bool' { $!dtype = Bool }
             }
         }
+#]
+
     }
 
     ### Mezzanine methods ###  (these use Accessors)
