@@ -187,7 +187,7 @@ role Series does DataSlice is export(:ALL) {
         samewith( data => ($data xx $index.elems).Array, :$index, |%h )
     }
 
-    method dtype {
+    multi method dtype {
         @.data.are     
     }
 
@@ -254,7 +254,7 @@ role Series does DataSlice is export(:ALL) {
 
     ### Outputs ###
     method str-attrs {
-        %( :$.name, dtype => $!dtype.^name,)
+        %( :$.name, dtype => $.dtype )
     }
 }
 
