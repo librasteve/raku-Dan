@@ -267,7 +267,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     has Any         @.data = [];        #redo 2d shaped Array when [; ] implemented
     has Int         %.index;            #row index
     has Int         %.columns;          #column index
-    has             @.dtypes;
 
     ### Contructors ###
 
@@ -289,8 +288,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     # helper functions
     method load-from-series( :$row-count, *@series ) {
         loop ( my $i=0; $i < @series; $i++ ) {
-
-            @!dtypes.push: @series[$i].dtype;
 
             my $key = @series[$i].name // @alphi[$i];
             %!columns{ $key } = $i;
@@ -429,7 +426,6 @@ role DataFrame does Positional does Iterable is export(:ALL) {
         if ! $axis {
             %!index = %()
         } else {
-            @!dtypes  = [];
             %!columns = %()
         }
     }
@@ -723,14 +719,12 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     method dtypes {
         my @labels = self.columns.&sbv;
 
-        if ! @!dtypes {
-            my @series = @labels.map({ self.series($_) });
-              @!dtypes = @series.map({ $_.dtype });
-        }
+        my @series = @labels.map({ self.series($_) });
+        my @dtypes = @series.map({ $_.dtype });
 
         gather {
             for @labels -> $k {
-                take $k ~ ' => ' ~ @!dtypes[$++].^name
+                take $k ~ ' => ' ~ @dtypes[$++].^name
             }
         }.join("\n")
     }
