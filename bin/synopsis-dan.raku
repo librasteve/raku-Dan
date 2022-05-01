@@ -126,6 +126,7 @@ my \df2 = DataFrame.new([
 ]);
 
 say ~df2; 
+say ~df2.describe;
 say "---------------------------------------------";
 say df2.data;
 say df2.index;

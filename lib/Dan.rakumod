@@ -249,7 +249,7 @@ role Series does DataSlice is export(:ALL) {
             :$.name,
             index => <count mean std min 25% 50% 75% max>,
             data => [$.count, $.mean, $.std, |@.fivenum],
-        )
+        ) if $.data.are ~~ Real
     }
 
     ### Outputs ###
