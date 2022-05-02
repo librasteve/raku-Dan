@@ -28,6 +28,11 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         samewith( index => $index.map({ $_ => $++ }).Hash, |%h )
     }
 
+    # clone value object with attrs
+    method clone { 
+        nextwith( :data(@!data.map(*.clone)), :%!index, |%_ ) 
+    }
+
     #### MAC Methods #####
     #Moves, Adds, Changes#
 
@@ -283,6 +288,11 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     # accept columns as List, make Hash
     multi method new( List:D :$columns, *%h ) {
         samewith( columns => $columns.map({ $_ => $++ }).Hash, |%h )
+    }
+
+    # clone value object with attrs
+    method clone { 
+        nextwith( :data(@!data.map(*.clone)), :%!index, :%!columns, |%_ ) 
     }
 
     # helper functions

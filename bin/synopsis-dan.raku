@@ -127,6 +127,16 @@ my \df2 = DataFrame.new([
 
 say ~df2; 
 say ~df2.describe;
+
+#`[
+# Clone
+my $dfxx = df2.clone;
+$dfxx.data[2;2] = 17;
+$dfxx.columns = ( <a b c d e f> Z=> 0..∞ );
+say ~$dfxx;
+say ~df2; 
+#]
+
 say "---------------------------------------------";
 say df2.data;
 say df2.index;
