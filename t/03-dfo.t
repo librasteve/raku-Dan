@@ -3,7 +3,7 @@
 #TESTALL$ prove6 ./t      [from root]
 use lib '../lib';
 use Test;
-plan 26;
+plan 28;
 
 use Dan :ALL;
 
@@ -43,11 +43,11 @@ ok (df.sort: { .[1], .[2] })[1][1] == 1,                                        
 ok (df.sort: { -.[1] })[1][1] == 1,                                                     '.sort: {-.[1]}';
 ok (df.sort: { df[$++]<C> })[1][1] ==1,                                                 '.sort: {df[$++]<C>}';
 ok (df.sort: { df.ix[$++] })[1][1] ==1,                                                 '.sort: {df.ix[$++]}';
-ok (df.sort: { df.ix.reverse.[$++] })[1][1] == 1,                               '.sort: {df.ix.reverse.[$++]}';
+ok (df.sort: { df.ix.reverse.[$++] })[1][1] == 1,                                       '.sort: {df.ix.reverse.[$++]}';
 
-# Grep MOVE TO END AS DESTRUCTIVE
+# Grep
 is ~df.grep( { .[1] < 0.5 } ), "   A  B  C  D ",                                        '.grep: {.[1] < 0.5}';
-is ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ), "   A  B  C  D ",         '.grep index (multiple)';
+ok df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ).elems == 2,                 '.grep index (multiple)';
 
 my \df2 = DataFrame.new([
         A => 1.0,
@@ -60,6 +60,13 @@ my \df2 = DataFrame.new([
 ok df2.columns.elems == 6,                                                              '.columns';
 is df2.dtypes, "A => Rat\nB => Date\nC => Int\nD => Int\nE => Str\nF => Str",           '.dtypes';
 
-is df2.shape, "4 6",                                                                  '.shape';
+is df2.shape, "4 6",                                                                    '.shape';
+
+# Clone
+my $dfxx = df2.clone;
+$dfxx.data[2;2] = 17; 
+$dfxx.columns = ( <a b c d e f> Z=> 0..∞ );
+ok df2[2;2] == 1,                                                                       '.clone (data)';
+ok df2.cx[2] eq "C",                                                                    '.clone (cx)';
 
 #done-testing;
