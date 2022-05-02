@@ -699,18 +699,20 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
 
     method grep( &cruton ) {  #&custom-routine-to-use
+        my $cp = self.clone;
+
         my $i;
         loop ( $i=0; $i < @!data; $i++ ) {
-            @!data[$i].push: %!index.&sbv[$i]
+            $cp.data[$i].push: $cp.index.&sbv[$i]
         }
 
-        @!data .= grep: &cruton;
-        %!index = %();
+        $cp.data .= grep: &cruton;
+        $cp.index = %();
 
-        loop ( $i=0; $i < @!data; $i++ ) {
-            %!index{@!data[$i].pop} = $i
+        loop ( $i=0; $i < $cp.data; $i++ ) {
+            $cp.index{$cp.data[$i].pop} = $i
         }
-        self
+        $cp
     }
 
     method describe {

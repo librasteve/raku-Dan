@@ -113,6 +113,7 @@ say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 # works on data "in place" - make a copy first if you need to keep it 
 say ~df.grep( { .[1] < 0.5 } ); # grep by 2nd column 
 say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
+die;
 
 say "=============================================";
 
