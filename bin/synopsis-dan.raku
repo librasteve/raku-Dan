@@ -109,11 +109,9 @@ say ~df.sort: { df.ix[$++] };   # sort by index
 say ~df.sort: { df.ix.reverse.[$++] };   # sort by index (descending)
 
 # Grep
-# global replace binary filter
-# works on data "in place" - make a copy first if you need to keep it 
+# global replace binary filter (makes clone)
 say ~df.grep( { .[1] < 0.5 } ); # grep by 2nd column 
 say ~df.grep( { df.ix[$++] eq <2022-01-02 2022-01-06>.any } ); # grep index (multiple) 
-die;
 
 say "=============================================";
 
