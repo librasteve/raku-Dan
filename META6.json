@@ -1,7 +1,7 @@
 {
   "name": "Dan",
   "description": "Top level roles for Data Analytics.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "perl": "6.d",
   "authors": [
     "p6steve"
