@@ -170,7 +170,7 @@ df2.splice( 1, 2, [j => $ds] );         #new index from Pair(s)
 
 # prep Series 
 my $se = df2.series: <a>;               
-$se.splice( 2, 1, [a => 7] );
+$se.splice( 2, 1, [e => 7] );
 
 # splice on cols 
 $se.name = 'K';                         #new column label from se.name 
