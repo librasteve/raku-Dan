@@ -10,7 +10,7 @@ It's rather a zen concept since raku contains many Data Analysis constructs & co
 
 Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
-# SYNOPOSIS
+# SYNOPSIS
 more examples in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
 ### Series ###
