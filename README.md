@@ -244,5 +244,5 @@ say ~my \costs  = Series.new( quants >>*<< prices );
 - concurrency
 - types (incl. NaN)
 
-copyright (c) 2022 Henley Cloud Consulting Ltd.
+copyright(c) 2022 Henley Cloud Consulting Ltd.
         
