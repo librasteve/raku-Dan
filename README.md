@@ -1,3 +1,5 @@
+[![License: Artistic-2.0](https://img.shields.io/badge/License-Artistic%202.0-0298c3.svg)](https://opensource.org/licenses/Artistic-2.0)
+
 # raku Dan
 Top level raku **D**ata **AN**alysis Module that provides **a base set of raku-style** datatype roles, accessors & methods, primarily:
 - DataSlices
@@ -241,4 +243,6 @@ say ~my \costs  = Series.new( quants >>*<< prices );
 - operator overloading
 - concurrency
 - types (incl. NaN)
+
+copyright (c) 2022 Henley Cloud Consulting Ltd.
         
