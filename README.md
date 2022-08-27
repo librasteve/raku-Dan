@@ -15,6 +15,8 @@ Contributions via PR are very welcome - please see the backlog Issue, or just em
 # SYNOPSIS
 more examples in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
+use Dan :ALL;
+
 ### Series ###
 
 my \s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
