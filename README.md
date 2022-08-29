@@ -11,7 +11,7 @@ It's rather a zen concept since raku contains many Data Analysis constructs & co
 
 Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
-## INSTALLATION
+# INSTALLATION
 ```
 zef install Dan;
 ```
