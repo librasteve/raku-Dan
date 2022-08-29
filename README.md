@@ -5,7 +5,7 @@ Top level raku **D**ata **AN**alysis Module that provides **a base set of raku-s
 - Series
 - DataFrames
 
-A common basis for bindings such as ... [Dan::Pandas](https://github.com/p6steve/raku-Dan-Pandas) (via Inline::Python), Dan::Polars(tbd) (via NativeCall / Rust FFI), etc.
+A common basis for bindings such as ... [Dan::Pandas](https://github.com/p6steve/raku-Dan-Pandas) (via Inline::Python), [Dan::Polars](https://github.com/p6steve/raku-Dan-Polars) (via NativeCall / Rust FFI), etc.
 
 It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 7 below)
 
