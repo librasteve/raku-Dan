@@ -11,9 +11,7 @@ It's rather a zen concept since raku contains many Data Analysis constructs & co
 
 Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
 
-## Installation
-
-Easiest way to deploy Dan is like this ...
+## INSTALLATION
 ```
 zef install Dan;
 ```
