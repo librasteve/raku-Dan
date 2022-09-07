@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - Dockerfile
-      - .github/workflows/rusty-ma-weekly.yaml
+      - .github/workflows/dan-weekly.yaml
   schedule:
       - cron: "58 3 * * 4"
 
