@@ -1,4 +1,4 @@
-FROM p6steve/rakudo:ubuntu-arm64-2022.02
+FROM p6steve/rakudo:basic
 
 RUN git clone https://github.com/p6steve/raku-Dan.git
 
