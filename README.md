@@ -154,6 +154,16 @@ my \dfa = DataFrame.new(
  1  b       2
 #]
 
+my \dfb = DataFrame.new(
+        [['c', 3], ['d', 4]],
+        columns => <letter number>,
+);
+#`[
+    letter  number
+ 0  c       3
+ 1  d       4
+#]
+
 my \dfc = DataFrame.new(
         [['c', 3, 'cat'], ['d', 4, 'dog']],
         columns => <animal letter number>,
