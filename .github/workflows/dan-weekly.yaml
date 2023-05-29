@@ -35,7 +35,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: p6steve/raku-dan:latest
+          tags: librasteve/raku-dan:latest
           push: true
           platforms: linux/arm64,linux/amd64
 

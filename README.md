@@ -1,5 +1,5 @@
 [![License: Artistic-2.0](https://img.shields.io/badge/License-Artistic%202.0-0298c3.svg)](https://opensource.org/licenses/Artistic-2.0)
-[![raku-dan:latest -> DH](https://github.com/p6steve/raku-Dan/actions/workflows/dan-weekly.yaml/badge.svg)](https://github.com/p6steve/raku-Dan/actions/workflows/dan-weekly.yaml)
+[![raku-dan:latest -> DH](https://github.com/librasteve/raku-Dan/actions/workflows/dan-weekly.yaml/badge.svg)](https://github.com/librasteve/raku-Dan/actions/workflows/dan-weekly.yaml)
 
 *THIS MODULE IS EXPERIMENTAL AND SUBJECT TO CHANGE WITHOUT NOITCE*
 
@@ -8,11 +8,11 @@ Top level raku **D**ata **AN**alysis Module that provides **a base set of raku-s
 - Series
 - DataFrames
 
-A common basis for bindings such as ... [Dan::Pandas](https://github.com/p6steve/raku-Dan-Pandas) (via Inline::Python), [Dan::Polars](https://github.com/p6steve/raku-Dan-Polars) (via NativeCall / Rust FFI), etc.
+A common basis for bindings such as ... [Dan::Pandas](https://github.com/librasteve/raku-Dan-Pandas) (via Inline::Python), [Dan::Polars](https://github.com/librasteve/raku-Dan-Polars) (via NativeCall / Rust FFI), etc.
 
 It's rather a zen concept since raku contains many Data Analysis constructs & concepts natively anyway (see note 7 below)
 
-Contributions via PR are very welcome - please see the backlog Issue, or just email p6steve@furnival.net to share ideas!
+Contributions via PR are very welcome - please see the backlog Issue, or just email librasteve@furnival.net to share ideas!
 
 # INSTALLATION
 ```
@@ -20,7 +20,7 @@ zef install Dan;
 ```
 
 # SYNOPSIS
-more examples in [bin/synopsis.raku](https://github.com/p6steve/raku-Dan/blob/main/bin/synopsis-dan.raku)
+more examples in [bin/synopsis.raku](https://github.com/librasteve/raku-Dan/blob/main/bin/synopsis-dan.raku)
 ```raku
 use Dan :ALL;
 

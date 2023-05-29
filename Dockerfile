@@ -1,3 +1,3 @@
-FROM p6steve/rakudo:basic
+FROM librasteve/rakudo:basic
 
-RUN zef install https://github.com/p6steve/raku-Dan.git
+RUN zef install https://github.com/librasteve/raku-Dan.git
