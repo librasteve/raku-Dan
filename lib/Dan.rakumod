@@ -141,6 +141,15 @@ role DataSlice does Positional does Iterable is export(:ALL) {
         @!data.hyper
     }
 
+    # Extra support for + numeric and  [+] reduce via list and Numeric
+
+    method Numeric {
+        @!data.Numeric
+    }
+    method list {
+        @!data.list
+    }
+
     # LIMITED Associative role support 
     # viz. https://docs.raku.org/type/Associative
     # DataSlice just implements the Assoc. methods, but does not do the Assoc. role
@@ -816,6 +825,14 @@ role DataFrame does Positional does Iterable is export(:ALL) {
     }
     method hyper {
         @!data.hyper
+    }
+    # Extra support for + numeric and  [+] reduce via list and Numeric
+
+    method Numeric {
+        @!data.Numeric
+    }
+    method list {
+        @!data.list
     }
 }
 

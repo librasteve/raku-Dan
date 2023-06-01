@@ -6,13 +6,11 @@ use Dan :ALL;
 
 ### Series ###
 
-my \s = $;    
-
-s = Series.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
+#my \s = Series.new( data => [1, 3, 5, NaN, 6, 8], index => <a b c d e f>, name => 'john' );
 #   -or-
-s = Series.new( [rand xx 5], index => <a b c d e>);
+#my \s = Series.new( [rand xx 5], index => <a b c d e>);
 #   -or-
-s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
+my \s = Series.new( [b=>1, a=>0, c=>2] );               #from Array of Pairs
 
 say ~s; 
 say "---------------------------------------------";
@@ -24,6 +22,7 @@ say s<b c>;         #2 1 (associative with slice)
 # Map/Reduce
 say s.map(*+2);     #(3 2 4)
 say [+] s;          #3
+say s.reduce: &infix:<+>;
 
 # Hyper
 say s >>+>> 2;      #(3 2 4)
