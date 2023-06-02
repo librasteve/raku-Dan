@@ -1,4 +1,4 @@
-unit module Dan:ver<0.0.2>:auth<Steve Roe (librasteve@furnival.net)>;
+unit module Dan:ver<0.0.3>:auth<Steve Roe (librasteve@furnival.net)>;
 
 use Text::Table::Simple;
 
